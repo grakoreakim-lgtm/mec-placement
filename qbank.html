@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>MEC QBank Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#1A3D1C;--gm:#245C28;--gl:#2E7034;--gp:#EFF6F0;--gd:#112614;
+  --cu:#8B4513;--cul:#B8621A;--cup:#FDF2E9;--gold:#C9A84C;
+  --bg:#F5F4EF;--sur:#FAFAF7;--bd:#DDD9D0;--bdl:#E8E5DD;
+  --tx:#1A1A1A;--txm:#3D3D3D;--txl:#777770;
+  --green:#16803C;--red:#CC2200;--amber:#B45309;
+  --sh:0 1px 4px rgba(0,0,0,.07);--shm:0 4px 18px rgba(0,0,0,.10);
+}
+body{font-family:'Plus Jakarta Sans','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:72px}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,var(--gd),var(--g));min-height:54px;display:flex;align-items:center;padding:8px 14px;gap:8px;position:sticky;top:0;z-index:200;flex-wrap:wrap;box-shadow:0 2px 10px rgba(26,61,28,.3)}
+.tb-logo{font-family:'Playfair Display',serif;font-size:16px;color:#fff;display:flex;align-items:center;gap:7px;white-space:nowrap;margin-right:6px}
+.tb-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 8px rgba(201,168,76,.5)}
+.tb-logo em{color:var(--gold);font-style:italic}
+.tb-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
+.tb-btn:hover{background:rgba(255,255,255,.22)}
+.tb-btn.save{background:rgba(201,168,76,.3);border-color:var(--gold);font-size:12.5px}
+.tb-btn.save:hover{background:rgba(201,168,76,.45)}
+
+/* DASHBOARD */
+.dashboard{padding:14px 14px 0}
+.dash-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--tx);margin-bottom:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.stat-card{background:var(--sur);border:1px solid var(--bd);border-radius:12px;padding:11px 10px;text-align:center;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.stat-card.active{border-color:var(--gm);background:var(--gp);box-shadow:0 0 0 2px rgba(26,61,28,.15)}
+.stat-num{font-family:'Playfair Display',serif;font-size:26px;color:var(--tx);line-height:1}
+.stat-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txl);margin-top:3px}
+.stat-card.active .stat-lbl{color:var(--gm)}
+
+/* STATUS TABLE */
+.status-table-wrap{background:var(--sur);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:var(--sh)}
+.status-table-title{padding:12px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;display:flex;align-items:center;justify-content:space-between}
+.status-table-title .gold{color:var(--gold);font-size:11px;font-weight:500}
+table.status-tbl{width:100%;border-collapse:collapse}
+table.status-tbl th{padding:9px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--txl);background:var(--bg);border-bottom:1px solid var(--bd);text-align:center}
+table.status-tbl th:first-child{text-align:left}
+table.status-tbl td{padding:9px 11px;font-size:12.5px;text-align:center;border-bottom:1px solid var(--bdl);color:var(--txm)}
+table.status-tbl td:first-child{text-align:left;font-weight:700;color:var(--tx)}
+table.status-tbl tr:last-child td{border-bottom:none;font-weight:700;background:var(--bg);color:var(--g)}
+.qty-ok{color:var(--green);font-weight:700}
+.qty-warn{color:var(--amber);font-weight:700}
+.qty-err{color:var(--red);font-weight:700}
+
+/* COUNT SETTINGS */
+.count-settings{background:var(--sur);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:var(--sh)}
+.cs-hd{padding:12px 16px;background:linear-gradient(135deg,rgba(26,61,28,.06),rgba(201,168,76,.06));border-bottom:1px solid var(--bdl);display:flex;align-items:center;justify-content:space-between}
+.cs-hd-title{font-size:13px;font-weight:700;color:var(--tx)}
+.cs-grid{display:grid;grid-template-columns:80px repeat(6,1fr);gap:0}
+.cs-cell{padding:8px 6px;text-align:center;border-bottom:1px solid var(--bdl);border-right:1px solid var(--bdl)}
+.cs-cell:last-child{border-right:none}
+.cs-label{font-size:11px;font-weight:700;color:var(--txl);padding-left:10px;text-align:left}
+.cs-input{width:100%;text-align:center;border:1.5px solid var(--bdl);border-radius:6px;padding:4px 3px;font-size:13px;font-weight:700;color:var(--g);font-family:inherit;outline:none;background:#fff}
+.cs-input:focus{border-color:var(--gm)}
+.cs-lv-hd{font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--txl);padding:6px 4px;background:var(--bg);border-bottom:1px solid var(--bd);border-right:1px solid var(--bdl);text-align:center}
+
+/* PAGE CONTENT */
+.main{padding:10px 14px}
+.page-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.page-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--tx)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-g{background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;box-shadow:0 2px 8px rgba(26,61,28,.25)}
+.btn-g:active{opacity:.9}
+.btn-s{background:#fff;color:var(--txm);border:1.5px solid var(--bd)}
+.btn-s:hover{background:var(--bg)}
+.btn-red{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
+
+/* FILTERS */
+.filter-bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-input{flex:1;min-width:120px;padding:9px 12px;border:1.5px solid var(--bd);border-radius:9px;font-size:14px;font-family:inherit;outline:none;background:#fff}
+.filter-input:focus{border-color:var(--gm)}
+.filter-sel{padding:9px 11px;border:1.5px solid var(--bd);border-radius:9px;font-size:13px;font-family:inherit;outline:none;background:#fff;max-width:120px}
+.shown-lbl{font-size:11.5px;color:var(--txl);margin-bottom:8px}
+
+/* LEVEL BADGES */
+.lv{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0}
+.lv-prea{background:#E8E0FF;color:#4338CA}
+.lv-a1{background:#D1FAE5;color:#065F46}
+.lv-a2{background:#FEF3C7;color:#92400E}
+.lv-b1{background:#DBEAFE;color:#1E40AF}
+.lv-b2{background:#EDE9FE;color:#5B21B6}
+.lv-c1{background:#FCE7F3;color:#9D174D}
+
+/* Q CARDS */
+.q-list{display:flex;flex-direction:column;gap:8px}
+.q-card{background:var(--sur);border:1px solid var(--bd);border-radius:12px;padding:12px;box-shadow:var(--sh);transition:all .15s}
+.q-card:hover{box-shadow:var(--shm);border-color:var(--gm)}
+.q-card-top{display:flex;align-items:flex-start;gap:7px;margin-bottom:7px}
+.q-type{font-size:9px;font-weight:700;background:var(--bg);color:var(--txl);padding:2px 7px;border-radius:4px;flex-shrink:0;margin-top:2px;border:1px solid var(--bdl)}
+.q-text{font-size:13px;color:var(--tx);line-height:1.45;flex:1;font-weight:500}
+.q-actions{display:flex;gap:6px;align-items:center;margin-top:7px}
+.q-correct{font-size:11px;font-weight:700;background:var(--gp);color:var(--green);padding:2px 10px;border-radius:5px;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid rgba(22,128,60,.2)}
+.q-meta{font-size:11px;color:var(--txl);flex:1}
+.del-btn{background:#FEF2F2;color:var(--red);border:1px solid #FECACA;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all .12s}
+.del-btn:active{background:var(--red);color:#fff}
+.empty{text-align:center;padding:48px 16px;color:var(--txl)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--txm);margin-bottom:6px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:93vh;overflow-y:auto;padding:0 0 20px}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--bdl);position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--tx)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--txl);padding:4px 8px;border-radius:6px}
+.modal-body{padding:16px 18px}
+.modal-ft{padding:12px 18px;border-top:1px solid var(--bdl);display:flex;gap:8px;justify-content:flex-end}
+.fr{margin-bottom:13px}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--txm);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.fi{width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:9px;font-size:15px;font-family:inherit;outline:none;color:var(--tx);background:#fff;transition:all .15s}
+.fi:focus{border-color:var(--gm);box-shadow:0 0 0 3px rgba(26,61,28,.08)}
+.ft{resize:vertical;min-height:72px;line-height:1.65}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.div-ln{height:1px;background:var(--bdl);margin:13px 0}
+.mini-hd{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txl);margin-bottom:8px}
+.opt-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.cr-btn{padding:6px 12px;border:1.5px solid var(--bd);border-radius:7px;font-size:12px;cursor:pointer;background:#fff;font-family:inherit;color:var(--txm);transition:all .12s;min-width:40px;text-align:center}
+.cr-btn.sel{background:var(--gp);border-color:var(--green);color:var(--green);font-weight:700}
+.turn-row{display:grid;grid-template-columns:80px 1fr;gap:7px;margin-bottom:8px;align-items:start}
+.spd-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.spd-val{font-size:14px;font-weight:700;color:var(--gm);min-width:44px;text-align:right}
+
+/* SETTINGS */
+.set-card{background:var(--sur);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--sh)}
+.set-hd{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:4px;color:var(--tx)}
+.set-desc{font-size:12.5px;color:var(--txl);margin-bottom:14px;line-height:1.6}
+.io-zone{border:2px dashed var(--bd);border-radius:12px;padding:22px;text-align:center;cursor:pointer;transition:all .18s;background:var(--bg)}
+.io-zone:active,.io-zone.over{border-color:var(--gm);background:var(--gp)}
+.io-title{font-size:14px;font-weight:700;color:var(--gm);margin-bottom:5px}
+.io-sub{font-size:11.5px;color:var(--txl)}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(6,1fr);z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.07)}
+.nav-item{display:flex;flex-direction:column;align-items:center;padding:7px 4px;cursor:pointer;transition:all .12s;border-top:2.5px solid transparent;gap:2px}
+.nav-item.active{border-top-color:var(--gold);background:linear-gradient(180deg,rgba(201,168,76,.08),transparent)}
+.nav-icon{font-size:17px;line-height:1}
+.nav-lbl{font-size:8.5px;font-weight:700;color:var(--txl);text-transform:uppercase;letter-spacing:.04em}
+.nav-item.active .nav-lbl{color:var(--gm)}
+.nav-badge{background:var(--gm);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;min-width:18px;text-align:center}
+.nav-item.active .nav-badge{background:var(--cu)}
+
+/* TOAST */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;padding:9px 22px;border-radius:22px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:2000;white-space:nowrap;max-width:92vw;text-align:center;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.toast.show{opacity:1}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+.toast.warn{background:var(--amber)}
+
+/* Level chips */
+.lv-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.lv-chip{padding:5px 13px;border-radius:20px;font-size:11.5px;font-weight:700;cursor:pointer;border:2px solid var(--bdl);background:#fff;color:var(--txl);transition:all .15s;letter-spacing:.03em}
+.lv-chip.active{border-color:var(--gm);background:var(--gp);color:var(--gm)}
+.lv-chip.prea{}.lv-chip.a1{}.lv-chip.a2{}.lv-chip.b1{}.lv-chip.b2{}.lv-chip.c1{}
+.q-count-badge{font-size:10px;background:var(--g);color:#fff;padding:1px 6px;border-radius:8px;margin-left:4px}
+.section-stat{font-size:11.5px;color:var(--txl);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-logo"><span class="tb-dot"></span>MEC <em>QBank</em></div>
+  <button class="tb-btn" onclick="loadFile()">&#8679; Load index.html</button>
+  <button class="tb-btn" onclick="importExcel()">&#128202; Excel</button>
+  <button class="tb-btn save" onclick="exportPatchedHTML()">&#128640; Save to index.html</button>
+</div>
+
+<!-- Stats bar -->
+<div style="background:var(--sur);border-bottom:1px solid var(--bd);padding:0 14px">
+  <div class="stats-grid" style="padding:10px 0 0">
+    <div class="stat-card active" data-page="dashboard"><div class="stat-num">&#128202;</div><div class="stat-lbl">Dashboard</div></div>
+    <div class="stat-card" data-page="gv"><div class="stat-num" id="s-gv">0</div><div class="stat-lbl">Grammar</div></div>
+    <div class="stat-card" data-page="reading"><div class="stat-num" id="s-rd">0</div><div class="stat-lbl">Reading</div></div>
+    <div class="stat-card" data-page="listening"><div class="stat-num" id="s-ls">0</div><div class="stat-lbl">Listen</div></div>
+    <div class="stat-card" data-page="writing"><div class="stat-num" id="s-wr">0</div><div class="stat-lbl">Writing</div></div>
+  </div>
+</div>
+
+<div class="main" id="pageContent"></div>
+
+
+<!-- GV -->
+<div class="modal-bg" id="gvModal"><div class="modal">
+  <div class="modal-hd"><span class="modal-title" id="gvTitle">Question</span><button class="modal-close" onclick="closeModal('gvModal')">✕</button></div>
+  <div class="modal-body" id="gvBody"></div>
+  <div class="modal-ft"><button class="btn btn-s" onclick="closeModal('gvModal')">Cancel</button><button class="btn btn-g" onclick="saveGV()">Save</button></div>
+</div></div>
+<!-- RD -->
+<div class="modal-bg" id="rdModal"><div class="modal">
+  <div class="modal-hd"><span class="modal-title" id="rdTitle">Passage</span><button class="modal-close" onclick="closeModal('rdModal')">✕</button></div>
+  <div class="modal-body" id="rdBody"></div>
+  <div class="modal-ft"><button class="btn btn-s" onclick="closeModal('rdModal')">Cancel</button><button class="btn btn-g" onclick="saveRD()">Save</button></div>
+</div></div>
+<!-- LS -->
+<div class="modal-bg" id="lsModal"><div class="modal">
+  <div class="modal-hd"><span class="modal-title" id="lsTitle">Script</span><button class="modal-close" onclick="closeModal('lsModal')">✕</button></div>
+  <div class="modal-body" id="lsBody"></div>
+  <div class="modal-ft"><button class="btn btn-s" onclick="closeModal('lsModal')">Cancel</button><button class="btn btn-g" onclick="saveLS()">Save</button></div>
+</div></div>
+<!-- WR -->
+<div class="modal-bg" id="wrModal"><div class="modal">
+  <div class="modal-hd"><span class="modal-title" id="wrTitle">Writing Task</span><button class="modal-close" onclick="closeModal('wrModal')">✕</button></div>
+  <div class="modal-body" id="wrBody"></div>
+  <div class="modal-ft"><button class="btn btn-s" onclick="closeModal('wrModal')">Cancel</button><button class="btn btn-g" onclick="saveWR()">Save</button></div>
+</div></div>
+<!-- SP -->
+<div class="modal-bg" id="spModal"><div class="modal">
+  <div class="modal-hd"><span class="modal-title" id="spTitle">Speaking Task</span><button class="modal-close" onclick="closeModal('spModal')">✕</button></div>
+  <div class="modal-body" id="spBody"></div>
+  <div class="modal-ft"><button class="btn btn-s" onclick="closeModal('spModal')">Cancel</button><button class="btn btn-g" onclick="saveSP()">Save</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+
+<nav class="bottom-nav">
+  <div class="nav-item" data-page="dashboard"><span class="nav-icon">&#128202;</span><span class="nav-lbl">Dash</span></div>
+  <div class="nav-item" data-page="gv"><span class="nav-icon">&#9998;</span><span class="nav-badge" id="cnt-gv">0</span><span class="nav-lbl">Grammar</span></div>
+  <div class="nav-item" data-page="reading"><span class="nav-icon">&#128218;</span><span class="nav-badge" id="cnt-rd">0</span><span class="nav-lbl">Reading</span></div>
+  <div class="nav-item" data-page="listening"><span class="nav-icon">&#127911;</span><span class="nav-badge" id="cnt-ls">0</span><span class="nav-lbl">Listen</span></div>
+  <div class="nav-item" data-page="writing"><span class="nav-icon">&#9997;&#65039;</span><span class="nav-badge" id="cnt-wr">0</span><span class="nav-lbl">Writing</span></div>
+  <div class="nav-item" data-page="speaking"><span class="nav-icon">&#127897;</span><span class="nav-badge" id="cnt-sp">0</span><span class="nav-lbl">Speaking</span></div>
+</nav>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
+let QB = {
+  grammarVocab:[], reading:[], listening:[], writing:[], speaking:[],
+  settings:{
+    gmTotals:{'Pre-A1':8,'A1':10,'A2':12,'B1':14,'B2':16,'C1':18},
+    rdPass:{'Pre-A1':1,'A1':2,'A2':2,'B1':2,'B2':2,'C1':2},
+    lsTasks:{'Pre-A1':1,'A1':2,'A2':2,'B1':2,'B2':2,'C1':2},
+    wrTasks:{'Pre-A1':1,'A1':1,'A2':1,'B1':1,'B2':2,'C1':2},
+    spTasks:{'Pre-A1':1,'A1':1,'A2':1,'B1':1,'B2':2,'C1':2},
+    lstSpeed:{'Pre-A1':0.80,'A1':0.82,'A2':0.85,'B1':0.88,'B2':0.92,'C1':1.0},
+    pictureSets:{
+      simple:[
+        {url:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=80',label:'Kitchen Scene'},
+        {url:'https://images.unsplash.com/photo-1484972759836-b93f9ef2b293?w=700&q=80',label:'Family Meal'},
+        {url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80',label:'Children Playing'}
+      ],
+      active:[
+        {url:'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=700&q=80',label:'Busy Market'},
+        {url:'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=700&q=80',label:'Airport Scene'},
+        {url:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=700&q=80',label:'Outdoor Sports'}
+      ],
+      complex:[
+        {url:'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=700&q=80',label:'City at Night'},
+        {url:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=700&q=80',label:'Nature vs Industry'},
+        {url:'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=700&q=80',label:'Workplace Scene'}
+      ]
+    }
+  }
+};
+
+let curPage='gv', filterLv='', filterQ='';
+let _editGV=null, _editRD=null, _editLS=null, _editWR=null, _editSP=-1;
+
+const LEVELS=['Pre-A1','A1','A2','B1','B2','C1'];
+const LV_CLS={'Pre-A1':'lv-prea','A1':'lv-a1','A2':'lv-a2','B1':'lv-b1','B2':'lv-b2','C1':'lv-c1'};
+const SECTIONS={gv:'grammarVocab',reading:'reading',listening:'listening',writing:'writing',speaking:'speaking'};
+
+// ── HELPERS ──────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const lvBadge = lv => `<span class="lv ${LV_CLS[lv]||'lv-a1'}">${esc(lv)}</span>`;
+const genId = p => `${p}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,5).toUpperCase()}`;
+
+function toast(msg,type=''){
+  const el=$('toast'); if(!el) return;
+  el.textContent=msg; el.className=`toast show ${type}`;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.className='toast',3200);
+}
+function closeModal(id){ const el=$(id); if(el) el.classList.remove('open'); }
+
+function updateCounts(){
+  const map={gv:QB.grammarVocab.length,rd:QB.reading.length,
+             ls:QB.listening.length,wr:QB.writing.length,sp:QB.speaking.length};
+  Object.entries(map).forEach(([k,v])=>{
+    const a=$(`cnt-${k}`); if(a) a.textContent=v;
+    const b=$(`s-${k}`);   if(b) b.textContent=v;
+  });
+}
+
+function filtered(arr){
+  return arr.filter(item=>{
+    const lvOk=filterLv?item.level===filterLv:true;
+    const qOk=filterQ?(item.question||item.title||item.instruction||'').toLowerCase().includes(filterQ.toLowerCase()):true;
+    return lvOk&&qOk;
+  });
+}
+
+function lvSel(id,val=''){
+  return `<select class="fi" id="${id}"><option value="">Select level</option>${
+    LEVELS.map(l=>`<option value="${l}"${l===(val||filterLv)?'selected':''}>${l}</option>`).join('')
+  }</select>`;
+}
+
+function lvFilter(){
+  return `<select class="filter-sel" onchange="filterLv=this.value;render()">
+    <option value="">All Levels</option>
+    ${LEVELS.map(l=>`<option value="${l}"${filterLv===l?' selected':''}>${l}</option>`).join('')}
+  </select>`;
+}
+
+// ── NAVIGATION ───────────────────────────────────────
+// Navigate to section + filter by level
+function navToSection(page, level) {
+  filterLv = level;
+  filterQ  = '';
+  navTo(page);
+  // Scroll to top
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function navTo(page){
+  // Preserve any in-progress settings input before navigating away
+  if(curPage === 'settings') captureSettingsInputs();
+  curPage=page; filterLv=''; filterQ='';
+  document.querySelectorAll('[data-page]').forEach(el=>
+    el.classList.toggle('active',el.dataset.page===page));
+  render();
+}
+
+function render(){
+  updateCounts();
+  const el=$('pageContent'); if(!el) return;
+  const map={gv:renderGV,reading:renderRD,listening:renderLS,
+             writing:renderWR,speaking:renderSP,settings:renderSettings,dashboard:renderDashboard};
+  if(map[curPage]) map[curPage](el);
+}
+
+// Save settings input values to QB.settings (called before any re-render that could wipe them)
+function captureSettingsInputs() {
+  try {
+    LEVELS.forEach(lv => {
+      const gm = $('gm_'+lv); if(gm && gm.value !== '') QB.settings.gmTotals[lv] = +gm.value || QB.settings.gmTotals[lv];
+      const rd = $('rd_'+lv); if(rd && rd.value !== '') QB.settings.rdPass[lv]   = +rd.value || QB.settings.rdPass[lv];
+      const ls = $('ls_'+lv); if(ls && ls.value !== '') QB.settings.lsTasks[lv]  = +ls.value || QB.settings.lsTasks[lv];
+      const wr = $('wr_'+lv); if(wr && wr.value !== '') QB.settings.wrTasks[lv]  = +wr.value || QB.settings.wrTasks[lv];
+      const sp = $('sp_'+lv); if(sp && sp.value !== '') QB.settings.spTasks[lv]  = +sp.value || QB.settings.spTasks[lv];
+    });
+    // Capture EL settings if present
+    const elKey = $('el_api_key'); if(elKey && elKey.value) EL_API_KEY = elKey.value.trim();
+    const elVA  = $('el_voice_a'); if(elVA && elVA.value) EL_VOICE_A = elVA.value;
+    const elVB  = $('el_voice_b'); if(elVB && elVB.value) EL_VOICE_B = elVB.value;
+    const elM   = $('el_model');   if(elM && elM.value)   EL_MODEL   = elM.value;
+  } catch(e) { console.warn('captureSettingsInputs failed:', e); }
+}
+
+// ══════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════
+function renderDashboard(el){
+  // Status table
+  const sections=[
+    ['Grammar/Vocab','gv','grammarVocab','gv'],
+    ['Reading','rd','reading','reading'],
+    ['Listening','ls','listening','listening'],
+    ['Writing','wr','writing','writing'],
+    ['Speaking','sp','speaking','speaking'],
+  ];
+  const recommended={grammarVocab:20,reading:2,listening:2,writing:2,speaking:2};
+
+  let tRows='';
+  sections.forEach(([name,key,arr,page])=>{
+    const items=QB[arr];
+    tRows+=`<tr><td style="font-weight:700">${name}</td>`;
+    LEVELS.forEach(lv=>{
+      const cnt=items.filter(x=>x.level===lv).length;
+      const rec=recommended[arr];
+      const cls=cnt>=rec?'qty-ok':cnt>0?'qty-warn':'qty-err';
+      tRows+=`<td class="${cls}" style="cursor:pointer" onclick="navToSection('${page}','${lv}')" title="Click to view ${name} ${lv}">${cnt}<span style="font-size:9px;color:var(--txl);margin-left:2px">↗</span></td>`;
+    });
+    tRows+=`<td style="font-weight:700">${items.length}</td></tr>`;
+  });
+  // Total row
+  tRows+=`<tr><td>TOTAL</td>`;
+  LEVELS.forEach(lv=>{
+    const cnt=['grammarVocab','reading','listening','writing','speaking']
+      .reduce((s,arr)=>s+QB[arr].filter(x=>x.level===lv).length,0);
+    tRows+=`<td>${cnt}</td>`;
+  });
+  const grand=['grammarVocab','reading','listening','writing','speaking']
+    .reduce((s,arr)=>s+QB[arr].length,0);
+  tRows+=`<td>${grand}</td></tr>`;
+
+  // Count settings grid
+  let csRows='';
+  [
+    ['Grammar Q count','gmTotals'],
+    ['Reading passages','rdPass'],
+    ['Listening tasks','lsTasks'],
+    ['Writing tasks','wrTasks'], // Pre-A1:10-20w A1:25-40w A2:40-60w B1:70-100w B2:100-130w C1:140-170w
+    ['Speaking tasks','spTasks'],
+  ].forEach(([label,key])=>{
+    csRows+=`<div class="cs-cell cs-label">${label}</div>`;
+    LEVELS.forEach(lv=>{
+      const val = QB.settings[key] ? (QB.settings[key][lv]||1) : 1;
+      csRows+=`<div class="cs-cell">
+        <input class="cs-input" type="number" min="1" max="30"
+          id="cs_${key}_${lv.replace('-','').replace(' ','')}"
+          value="${val}"
+          onchange="updateSetting('${key}','${lv}',this.value)">
+      </div>`;
+    });
+  });
+
+    // Word count reference
+    csRows += '<div class="cs-cell cs-label" style="grid-column:1/-1;background:var(--gp);color:var(--g);font-size:11px;padding:6px 10px;border-radius:6px;font-style:italic">Writing word targets: Pre-A1: 10–20 · A1: 25–40 · A2: 40–60 · B1: 70–100 · B2: 100–130 · C1: 140–170</div>';
+  // Speed row (display only with inline edit)
+  csRows+=`<div class="cs-cell cs-label">Listen speed %</div>`;
+  LEVELS.forEach(lv=>{
+    const spd=Math.round((QB.settings.lstSpeed?.[lv]||0.82)*100);
+    csRows+=`<div class="cs-cell"><input class="cs-input" type="number" min="50" max="100"
+      id="cs_lstSpeed_${lv.replace('-','').replace(' ','')}" value="${spd}"
+      onchange="updateSetting('lstSpeed','${lv}',this.value/100)"></div>`;
+  });
+
+  el.innerHTML=`
+    <div class="dash-title">&#128202; Question Bank Status</div>
+
+    <div class="status-table-wrap">
+      <div class="status-table-title">
+        <span>Questions by Section & Level</span>
+        <span class="gold">&#9989; ≥ recommended &nbsp; &#9888; partial &nbsp; &#10060; empty</span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="status-tbl">
+        <thead><tr>
+          <th>Section</th>
+          ${LEVELS.map(l=>`<th>${l}</th>`).join('')}
+          <th>Total</th>
+        </tr></thead>
+        <tbody>${tRows}</tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="count-settings">
+      <div class="cs-hd">
+        <span class="cs-hd-title">&#9881; Question Count per Level</span>
+        <button class="btn btn-sm btn-g" onclick="saveCountSettings()">Save</button>
+      </div>
+      <div style="overflow-x:auto">
+      <div class="cs-grid" style="min-width:480px">
+        <div class="cs-cell cs-label" style="background:var(--bg)">Setting</div>
+        ${LEVELS.map(l=>`<div class="cs-lv-hd">${l}</div>`).join('')}
+        ${csRows}
+      </div>
+      </div>
+      <div style="padding:10px 14px;font-size:11px;color:var(--txl)">
+        &#9432; Changes take effect when you save to index.html
+      </div>
+    </div>
+  `;
+}
+
+function updateSetting(key,lv,val){
+  if(!QB.settings[key]) QB.settings[key]={};
+  QB.settings[key][lv]=parseInt(val)||1;
+}
+
+function saveCountSettings(){
+  // Re-read all inputs
+  [['gmTotals',2,30],['rdPass',1,4],['lsTasks',1,4],['wrTasks',1,4],['spTasks',1,4]].forEach(([key,min,max])=>{
+    LEVELS.forEach(lv=>{
+      const id=`cs_${key}_${lv.replace('-','').replace(' ','')}`;
+      const el=$(id); if(!el) return;
+      QB.settings[key][lv]=Math.min(max,Math.max(min,parseInt(el.value)||min));
+    });
+  });
+  toast('Count settings saved ✓','ok');
+}
+
+// ══════════════════════════════════════════════════════
+// GRAMMAR/VOCAB
+// ══════════════════════════════════════════════════════
+function renderGV(el){
+  const items=filtered(QB.grammarVocab);
+  const lvCounts = LEVELS.map(lv=>({lv, cnt: QB.grammarVocab.filter(x=>x.level===lv).length}));
+  el.innerHTML=`
+    <div class="page-hd">
+      <div class="page-title">&#9998; Grammar & Vocab</div>
+      <button class="btn btn-g btn-sm" onclick="openGV(null)">+ Add One</button>
+    </div>
+    <div class="lv-chips">
+      <span class="lv-chip${!filterLv?' active':''}" onclick="filterLv='';render()">All <span class="q-count-badge">${QB.grammarVocab.length}</span></span>
+      ${LEVELS.map(lv=>`<span class="lv-chip${filterLv===lv?' active':''}" onclick="filterLv='${lv}';render()">${lv} <span class="q-count-badge">${lvCounts.find(x=>x.lv===lv).cnt}</span></span>`).join('')}
+    </div>
+    <div class="filter-bar">
+      <input class="filter-input" placeholder="Search question text..." value="${esc(filterQ)}" oninput="filterQ=this.value;render()">
+    </div>
+    <div class="section-stat">${items.length} shown &nbsp;·&nbsp; Click a card to edit</div>
+    ${items.length===0
+      ?`<div class="empty"><div class="empty-icon">&#9998;</div><div class="empty-title">No questions</div><p>Load index.html or press + Add</p></div>`
+      :`<div class="q-list">${items.map(q=>`
+        <div class="q-card">
+          <div class="q-card-top">
+            ${lvBadge(q.level)}
+            <span class="q-type">${esc(q.type||'MCQ')}</span>
+            <span class="q-text">${esc(q.question)}</span>
+          </div>
+          ${q.stimulus?`<div style="font-size:11px;color:var(--txl);margin-bottom:5px">▸ ${esc(q.stimulus.slice(0,60))}</div>`:''}
+          <div class="q-actions">
+            <span class="q-correct">✓ ${esc((q.options?.[q.correctIndex]||'-').slice(0,30))}</span>
+            <button class="btn btn-xs btn-s" data-fn="openGV" data-id="${esc(q.id)}">&#9998; Edit</button>
+            <button class="del-btn" data-fn="delGV" data-id="${esc(q.id)}">&#128465;</button>
+          </div>
+        </div>`).join('')}</div>`
+    }`;
+}
+
+function openGV(id){
+  const q=id?QB.grammarVocab.find(x=>x.id===id):null; _editGV=q;
+  const opts=q?.options||['','','',''], ci=q?.correctIndex??0;
+  $('gvTitle').textContent=q?'Edit Question':'Add Question';
+  $('gvBody').innerHTML=`
+    <div class="fr">${lvSel('gv_lv',q?.level||'')}</div>
+    <div class="fr"><label class="fl">Type</label>
+      <select class="fi" id="gv_type">${
+        ['MCQ-C','ERROR-ID','VOCAB-VIS','PHONICS','VOCAB-ANIMAL','VOCAB-CLASS','VOCAB-FAM','VOCAB-FUNC','VOCAB-NUM','VOCAB-SHAP']
+        .map(t=>`<option${t===(q?.type||'MCQ-C')?' selected':''}>${t}</option>`).join('')
+      }</select></div>
+    <div class="fr"><label class="fl">Question</label><input class="fi" id="gv_q" value="${esc(q?.question||'')}"></div>
+    <div class="fr"><label class="fl">Stimulus (optional)</label><input class="fi" id="gv_stim" value="${esc(q?.stimulus||'')}"></div>
+    <div class="div-ln"></div>
+    <div class="mini-hd">Options — tap letter to mark correct</div>
+    ${opts.map((o,i)=>`
+      <div class="opt-row">
+        <input class="fi" id="gv_opt${i}" value="${esc(o)}" placeholder="Option ${['A','B','C','D'][i]}">
+        <button class="cr-btn${i===ci?' sel':''}" id="gv_cr${i}" onclick="selectCorrect(${i})">${['A','B','C','D'][i]}</button>
+      </div>`).join('')}
+    <input type="hidden" id="gv_ci" value="${ci}">`;
+  $('gvModal').classList.add('open');
+}
+
+function selectCorrect(i){
+  $('gv_ci').value=i;
+  [0,1,2,3].forEach(j=>{ const b=$(`gv_cr${j}`); if(b) b.className='cr-btn'+(j===i?' sel':''); });
+}
+
+function saveGV(){
+  const lv=$('gv_lv')?.value, q=$('gv_q')?.value.trim();
+  if(!lv){toast('Select a level','err');return;}
+  if(!q){toast('Enter a question','err');return;}
+  const opts=[0,1,2,3].map(i=>$(`gv_opt${i}`)?.value.trim()||'');
+  if(opts.filter(Boolean).length<2){toast('Enter at least 2 options','err');return;}
+  const item={
+    id:_editGV?.id||genId('GV'),level:lv,
+    type:$('gv_type')?.value||'MCQ-C',
+    question:q,stimulus:$('gv_stim')?.value.trim()||'',
+    options:opts,correctIndex:parseInt($('gv_ci')?.value||'0')
+  };
+  if(_editGV){ const idx=QB.grammarVocab.findIndex(x=>x.id===_editGV.id); if(idx>=0) QB.grammarVocab[idx]=item; }
+  else QB.grammarVocab.push(item);
+  closeModal('gvModal'); render(); toast('Saved ✓','ok');
+}
+
+function delGV(id){
+  if(!confirm('Delete this question?')) return;
+  QB.grammarVocab=QB.grammarVocab.filter(x=>x.id!==id);
+  render(); toast('Deleted','warn');
+}
+
+// ══════════════════════════════════════════════════════
+// READING
+// ══════════════════════════════════════════════════════
+function renderRD(el){
+  const items=filtered(QB.reading);
+  const rdLvCounts = LEVELS.map(lv=>({lv, cnt: QB.reading.filter(x=>x.level===lv).length}));
+  el.innerHTML=`
+    <div class="page-hd">
+      <div class="page-title">&#128218; Reading</div>
+      <button class="btn btn-g btn-sm" onclick="openRD(null)">+ Add Passage</button>
+    </div>
+    <div class="lv-chips">
+      <span class="lv-chip${!filterLv?' active':''}" onclick="filterLv='';render()">All <span class="q-count-badge">${QB.reading.length}</span></span>
+      ${LEVELS.map(lv=>`<span class="lv-chip${filterLv===lv?' active':''}" onclick="filterLv='${lv}';render()">${lv} <span class="q-count-badge">${rdLvCounts.find(x=>x.lv===lv).cnt}</span></span>`).join('')}
+    </div>
+    <div class="filter-bar">
+      <input class="filter-input" placeholder="Search title/text..." value="${esc(filterQ)}" oninput="filterQ=this.value;render()">
+    </div>
+    <div class="section-stat">${items.length} shown</div>
+    ${items.length===0
+      ?`<div class="empty"><div class="empty-icon">&#128218;</div><div class="empty-title">No passages</div></div>`
+      :`<div class="q-list">${items.map(p=>`
+        <div class="q-card">
+          <div class="q-card-top">
+            ${lvBadge(p.level)}
+            <span class="q-type">${esc(p.textType||'')}</span>
+            <span class="q-text"><strong>${esc(p.title)}</strong></span>
+          </div>
+          <div style="font-size:11px;color:var(--txl);margin-bottom:6px">${esc(p.text.slice(0,90))}…</div>
+          <div class="q-actions">
+            <span class="q-meta">${p.questions.length} question${p.questions.length!==1?'s':''}</span>
+            <button class="btn btn-xs btn-s" data-fn="openRD" data-id="${esc(p.id)}">&#9998; Edit</button>
+            <button class="del-btn" data-fn="delRD" data-id="${esc(p.id)}">&#128465;</button>
+          </div>
+        </div>`).join('')}</div>`
+    }`;
+}
+
+function openRD(id){
+  const p=id?QB.reading.find(x=>x.id===id):null; _editRD=p;
+  $('rdTitle').textContent=p?'Edit Passage':'Add Passage';
+  const qs=p?.questions||[{type:'detail',question:'',options:['','','',''],correctIndex:0}];
+  const qHTML=qs.map((q,qi)=>`
+    <div class="div-ln"></div>
+    <div class="mini-hd">Question ${qi+1}</div>
+    <div class="fr"><input class="fi" id="rd_qt${qi}" placeholder="Question text" value="${esc(q.question)}"></div>
+    <div class="fr2">${q.options.map((o,i)=>`<input class="fi" id="rd_o${qi}_${i}" placeholder="${['A','B','C','D'][i]}" value="${esc(o)}">`).join('')}</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">${[0,1,2,3].map(i=>
+      `<button class="cr-btn${i===q.correctIndex?' sel':''}" id="rd_cr${qi}_${i}" onclick="rdSelectCorrect(${qi},${i})">${['A','B','C','D'][i]}</button>`
+    ).join('')}</div>
+    <input type="hidden" id="rd_ci${qi}" value="${q.correctIndex}">`
+  ).join('');
+  $('rdBody').innerHTML=`
+    <div class="fr">${lvSel('rd_lv',p?.level||'')}</div>
+    <div class="fr"><label class="fl">Text Type</label>
+      <select class="fi" id="rd_type">${['narrative','informational','descriptive','argumentative']
+        .map(t=>`<option${t===(p?.textType||'informational')?' selected':''}>${t}</option>`).join('')}
+      </select></div>
+    <div class="fr"><label class="fl">Title</label><input class="fi" id="rd_title" value="${esc(p?.title||'')}"></div>
+    <div class="fr"><label class="fl">Passage Text</label><textarea class="fi ft" id="rd_text" rows="5">${esc(p?.text||'')}</textarea></div>
+    ${qHTML}`;
+  $('rdModal').classList.add('open');
+}
+
+function rdSelectCorrect(qi,i){
+  $(`rd_ci${qi}`).value=i;
+  [0,1,2,3].forEach(j=>{ const b=$(`rd_cr${qi}_${j}`); if(b) b.className='cr-btn'+(j===i?' sel':''); });
+}
+
+function saveRD(){
+  const lv=$('rd_lv')?.value,title=$('rd_title')?.value.trim(),text=$('rd_text')?.value.trim();
+  if(!lv){toast('Select a level','err');return;}
+  if(!title){toast('Enter a title','err');return;}
+  if(!text){toast('Enter passage text','err');return;}
+  const questions=[];
+  for(let qi=0;;qi++){
+    const qel=$(`rd_qt${qi}`); if(!qel) break;
+    const qt=qel.value.trim(); if(!qt) continue;
+    const opts=[0,1,2,3].map(i=>$(`rd_o${qi}_${i}`)?.value.trim()||'');
+    questions.push({type:'detail',question:qt,options:opts,correctIndex:parseInt($(`rd_ci${qi}`)?.value||'0')});
+  }
+  if(!questions.length){toast('Add at least 1 question','err');return;}
+  const item={id:_editRD?.id||genId('RD'),level:lv,textType:$('rd_type')?.value||'informational',title,text,questions};
+  if(_editRD){const idx=QB.reading.findIndex(x=>x.id===_editRD.id);if(idx>=0)QB.reading[idx]=item;}
+  else QB.reading.push(item);
+  closeModal('rdModal');render();toast('Saved ✓','ok');
+}
+
+function delRD(id){if(!confirm('Delete passage?'))return;QB.reading=QB.reading.filter(x=>x.id!==id);render();toast('Deleted','warn');}
+
+// ══════════════════════════════════════════════════════
+// LISTENING
+// ══════════════════════════════════════════════════════
+function renderLS(el){
+  const items=filtered(QB.listening);
+  const lsLvCounts = LEVELS.map(lv=>({lv, cnt: QB.listening.filter(x=>x.level===lv).length}));
+  el.innerHTML=`
+    <div class="page-hd">
+      <div class="page-title">&#127911; Listening</div>
+      <button class="btn btn-g btn-sm" onclick="openLS(null)">+ Add Script</button>
+    </div>
+    <div class="lv-chips">
+      <span class="lv-chip${!filterLv?' active':''}" onclick="filterLv='';render()">All <span class="q-count-badge">${QB.listening.length}</span></span>
+      ${LEVELS.map(lv=>`<span class="lv-chip${filterLv===lv?' active':''}" onclick="filterLv='${lv}';render()">${lv} <span class="q-count-badge">${lsLvCounts.find(x=>x.lv===lv).cnt}</span></span>`).join('')}
+    </div>
+    <div class="filter-bar">
+      <input class="filter-input" placeholder="Search title/context..." value="${esc(filterQ)}" oninput="filterQ=this.value;render()">
+    </div>
+    <div class="section-stat">${items.length} shown</div>
+    ${items.length===0
+      ?`<div class="empty"><div class="empty-icon">&#127911;</div><div class="empty-title">No scripts</div></div>`
+      :`<div class="q-list">${items.map(t=>{
+        const turns=(t.turns||[]).length;
+        const audioCount=(t.turns||[]).filter(tr=>tr.audioB64).length;
+        const hasAudio=audioCount>0;
+        return `<div class="q-card">
+          <div class="q-card-top">
+            ${lvBadge(t.level)}
+            <span class="q-type">${esc(t.format||'dialogue')}</span>
+            <span class="q-text"><strong>${esc(t.title)}</strong></span>
+          </div>
+          <div style="font-size:11px;color:var(--txl);margin-bottom:6px">
+            Speed: ${Math.round((t.speed||0.9)*100)}% &bull; ${turns} turns &bull; ${(t.questions||[]).length} Qs
+            ${hasAudio?` &bull; <span style="color:var(--green);font-weight:700">&#127925; ${audioCount}/${turns} audio</span>`:''}
+          </div>
+          <div class="q-actions" style="flex-wrap:wrap;gap:5px">
+            <button class="btn btn-xs btn-s" data-fn="openLS" data-id="${esc(t.id)}">&#9998; Edit</button>
+            <button class="btn btn-xs" data-fn="genAudio" data-id="${esc(t.id)}"
+              style="background:${hasAudio?'#16803C':'var(--cu)'};color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
+              &#127911; ${hasAudio?'Regenerate':'Generate Audio'}
+            </button>
+            ${hasAudio?`<button class="btn btn-xs btn-s" data-fn="clearAudio" data-id="${esc(t.id)}" style="font-size:11px">&#10005; Clear Audio</button>`:''}
+            <button class="del-btn" data-fn="delLS" data-id="${esc(t.id)}">&#128465;</button>
+          </div>
+        </div>`;
+      }).join('')}</div>`
+    }`;
+}
+
+function openLS(id){
+  const t=id?QB.listening.find(x=>x.id===id):null; _editLS=t;
+  $('lsTitle').textContent=t?'Edit Script':'Add Script';
+  const chars=t?.characters||[{name:'Speaker A',role:'',side:'left',emoji:'👩'},{name:'Speaker B',role:'',side:'right',emoji:'👨'}];
+  const turns=t?.turns||[];
+  const qs=t?.questions||[{question:'',options:['','','',''],correctIndex:0}];
+  const turnHTML=turns.map((tr,i)=>`
+    <div class="turn-row">
+      <select class="fi" id="ls_ts${i}">
+        <option value="0"${tr.speakerIndex===0?' selected':''}>Spk A</option>
+        <option value="1"${tr.speakerIndex===1?' selected':''}>Spk B</option>
+      </select>
+      <textarea class="fi ft" id="ls_tt${i}" rows="2">${esc(tr.text)}</textarea>
+    </div>`).join('');
+  const qHTML=qs.map((q,qi)=>`
+    <div class="div-ln"></div>
+    <div class="mini-hd">Question ${qi+1}</div>
+    <div class="fr"><input class="fi" id="ls_qt${qi}" placeholder="Question" value="${esc(q.question)}"></div>
+    <div class="fr2">${q.options.map((o,i)=>`<input class="fi" id="ls_o${qi}_${i}" placeholder="${['A','B','C','D'][i]}" value="${esc(o)}">`).join('')}</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">${[0,1,2,3].map(i=>
+      `<button class="cr-btn${i===q.correctIndex?' sel':''}" id="ls_cr${qi}_${i}" onclick="lsSelectCorrect(${qi},${i})">${['A','B','C','D'][i]}</button>`
+    ).join('')}</div>
+    <input type="hidden" id="ls_ci${qi}" value="${q.correctIndex}">`
+  ).join('');
+  $('lsBody').innerHTML=`
+    <div class="fr">${lvSel('ls_lv',t?.level||'')}</div>
+    <div class="fr2">
+      <div><label class="fl">Format</label><select class="fi" id="ls_fmt">${
+        ['dialogue','monologue','interview','announcement'].map(f=>`<option${f===(t?.format||'dialogue')?' selected':''}>${f}</option>`).join('')
+      }</select></div>
+      <div><label class="fl">Speed</label>
+        <input type="range" min="50" max="100" value="${Math.round((t?.speed||0.82)*100)}"
+          oninput="$('ls_spdv').textContent=this.value+'%';$('ls_spd').value=this.value" style="width:100%;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txl)">
+          <span>50%</span><span class="spd-val" id="ls_spdv">${Math.round((t?.speed||0.82)*100)}%</span><span>100%</span>
+        </div>
+        <input type="hidden" id="ls_spd" value="${Math.round((t?.speed||0.82)*100)}">
+      </div>
+    </div>
+    <div class="fr"><label class="fl">Title</label><input class="fi" id="ls_title" value="${esc(t?.title||'')}"></div>
+    <div class="fr"><label class="fl">Context</label><input class="fi" id="ls_ctx" value="${esc(t?.taskContext||'')}"></div>
+    <div class="fr2">
+      <div><label class="fl">Speaker A</label><input class="fi" id="ls_s0name" value="${esc(chars[0]?.name||'Speaker A')}"></div>
+      <div><label class="fl">Speaker B</label><input class="fi" id="ls_s1name" value="${esc(chars[1]?.name||'Speaker B')}"></div>
+    </div>
+    <div class="div-ln"></div>
+    <div class="mini-hd">Script Turns</div>
+    <div id="ls_turns">${turnHTML}</div>
+    <button class="btn btn-s btn-sm" onclick="addTurn()" style="margin-bottom:12px">+ Add Turn</button>
+    ${qHTML}`;
+  $('lsModal').classList.add('open');
+}
+
+function addTurn(){
+  const cont=$('ls_turns'); if(!cont) return;
+  const i=cont.querySelectorAll('.turn-row').length;
+  const div=document.createElement('div'); div.className='turn-row';
+  div.innerHTML=`<select class="fi" id="ls_ts${i}"><option value="0">Spk A</option><option value="1">Spk B</option></select>
+    <textarea class="fi ft" id="ls_tt${i}" rows="2" placeholder="Dialogue text…"></textarea>`;
+  cont.appendChild(div);
+}
+
+function lsSelectCorrect(qi,i){
+  $(`ls_ci${qi}`).value=i;
+  [0,1,2,3].forEach(j=>{const b=$(`ls_cr${qi}_${j}`);if(b)b.className='cr-btn'+(j===i?' sel':'');});
+}
+
+function saveLS(){
+  const lv=$('ls_lv')?.value,title=$('ls_title')?.value.trim();
+  if(!lv){toast('Select a level','err');return;}
+  if(!title){toast('Enter a title','err');return;}
+  const turnRows=document.querySelectorAll('#ls_turns .turn-row');
+  const turns=[...turnRows].map((row,i)=>({
+    speakerIndex:parseInt($(`ls_ts${i}`)?.value||'0'),
+    text:$(`ls_tt${i}`)?.value.trim()||''
+  })).filter(t=>t.text);
+  if(!turns.length){toast('Add at least 1 turn','err');return;}
+  const questions=[];
+  for(let qi=0;;qi++){
+    const qel=$(`ls_qt${qi}`);if(!qel)break;
+    const qt=qel.value.trim();if(!qt)continue;
+    const opts=[0,1,2,3].map(i=>$(`ls_o${qi}_${i}`)?.value.trim()||'');
+    questions.push({type:'detail',question:qt,options:opts,correctIndex:parseInt($(`ls_ci${qi}`)?.value||'0')});
+  }
+  if(!questions.length){toast('Add at least 1 question','err');return;}
+  const spdv=parseInt($('ls_spd')?.value||'82');
+  const chars=[
+    {name:$('ls_s0name')?.value.trim()||'Speaker A',role:'',side:'left',emoji:'👩'},
+    {name:$('ls_s1name')?.value.trim()||'Speaker B',role:'',side:'right',emoji:'👨'}
+  ];
+  const item={id:_editLS?.id||genId('LS'),level:lv,format:$('ls_fmt')?.value||'dialogue',
+    title,taskContext:$('ls_ctx')?.value.trim()||'',speed:spdv/100,characters:chars,turns,questions};
+  if(_editLS){const idx=QB.listening.findIndex(x=>x.id===_editLS.id);if(idx>=0)QB.listening[idx]=item;}
+  else QB.listening.push(item);
+  closeModal('lsModal');render();toast('Saved ✓','ok');
+}
+
+function delLS(id){if(!confirm('Delete script?'))return;QB.listening=QB.listening.filter(x=>x.id!==id);render();toast('Deleted','warn');}
+
+// ══════════════════════════════════════════════════════
+// WRITING
+// ══════════════════════════════════════════════════════
+function renderWR(el){
+  const items=filtered(QB.writing);
+  const wrLvCounts = LEVELS.map(lv=>({lv, cnt: QB.writing.filter(x=>x.level===lv).length}));
+  el.innerHTML=`
+    <div class="page-hd">
+      <div class="page-title">&#9997;&#65039; Writing</div>
+      <button class="btn btn-g btn-sm" onclick="openWR(null)">+ Add Task</button>
+    </div>
+    <div class="lv-chips">
+      <span class="lv-chip${!filterLv?' active':''}" onclick="filterLv='';render()">All <span class="q-count-badge">${QB.writing.length}</span></span>
+      ${LEVELS.map(lv=>`<span class="lv-chip${filterLv===lv?' active':''}" onclick="filterLv='${lv}';render()">${lv} <span class="q-count-badge">${wrLvCounts.find(x=>x.lv===lv).cnt}</span></span>`).join('')}
+    </div>
+    <div class="filter-bar">
+      <input class="filter-input" placeholder="Search instruction..." value="${esc(filterQ)}" oninput="filterQ=this.value;render()">
+    </div>
+    <div class="section-stat">${items.length} shown</div>
+    ${items.length===0
+      ?`<div class="empty"><div class="empty-icon">&#9997;&#65039;</div><div class="empty-title">No writing tasks</div></div>`
+      :`<div class="q-list">${items.map(t=>`
+        <div class="q-card">
+          <div class="q-card-top">
+            ${lvBadge(t.level)}
+            <span class="q-type">${esc(t.taskType||'')}</span>
+            <span class="q-text">${esc((t.instruction||'').slice(0,90))}</span>
+          </div>
+          <div class="q-actions">
+            <span class="q-meta">${esc(t.wordRange||'')} words</span>
+            <button class="btn btn-xs btn-s" data-fn="openWR" data-id="${esc(t.id)}">&#9998; Edit</button>
+            <button class="del-btn" data-fn="delWR" data-id="${esc(t.id)}">&#128465;</button>
+          </div>
+        </div>`).join('')}</div>`
+    }`;
+}
+
+function openWR(id){
+  const t=id?QB.writing.find(x=>x.id===id):null; _editWR=t;
+  $('wrTitle').textContent=t?'Edit Task':'Add Writing Task';
+  $('wrBody').innerHTML=`
+    <div class="fr">${lvSel('wr_lv',t?.level||'')}</div>
+    <div class="fr"><label class="fl">Task Type</label><input class="fi" id="wr_type" value="${esc(t?.taskType||'')}" placeholder="e.g. Informal Email, Opinion Paragraph"></div>
+    <div class="fr"><label class="fl">Instruction</label><textarea class="fi ft" id="wr_inst" rows="3">${esc(t?.instruction||'')}</textarea></div>
+    <div class="fr"><label class="fl">Context (optional)</label><textarea class="fi ft" id="wr_ctx" rows="2">${esc(t?.context||'')}</textarea></div>
+    <div class="fr2">
+      <div><label class="fl">Word Range</label><input class="fi" id="wr_range" value="${esc(t?.wordRange||'')}" placeholder="e.g. 80–100"></div>
+      <div></div>
+    </div>
+    <div class="fr"><label class="fl">Sentence Frames (optional)</label><textarea class="fi ft" id="wr_frames" rows="2">${esc(t?.sentenceFrames||'')}</textarea></div>`;
+  $('wrModal').classList.add('open');
+}
+
+function saveWR(){
+  const lv=$('wr_lv')?.value,inst=$('wr_inst')?.value.trim();
+  if(!lv){toast('Select a level','err');return;}
+  if(!inst){toast('Enter instruction','err');return;}
+  const item={id:_editWR?.id||genId('WT'),level:lv,taskType:$('wr_type')?.value.trim()||'',
+    instruction:inst,context:$('wr_ctx')?.value.trim()||'',
+    wordRange:$('wr_range')?.value.trim()||'',sentenceFrames:$('wr_frames')?.value.trim()||''};
+  if(_editWR){const idx=QB.writing.findIndex(x=>x.id===_editWR.id);if(idx>=0)QB.writing[idx]=item;}
+  else QB.writing.push(item);
+  closeModal('wrModal');render();toast('Saved ✓','ok');
+}
+
+function delWR(id){if(!confirm('Delete task?'))return;QB.writing=QB.writing.filter(x=>x.id!==id);render();toast('Deleted','warn');}
+
+// ══════════════════════════════════════════════════════
+// SPEAKING
+// ══════════════════════════════════════════════════════
+function renderSP(el){
+  const items=QB.speaking.filter(t=>!filterLv||t.level===filterLv);
+  const spAllItems=QB.speaking.filter(t=>!filterLv||t.level===filterLv).filter(t=>!filterQ||(t.instruction||'').toLowerCase().includes(filterQ.toLowerCase()));
+  const spLvCounts = LEVELS.map(lv=>({lv, cnt: QB.speaking.filter(x=>x.level===lv).length}));
+  el.innerHTML=`
+    <div class="page-hd">
+      <div class="page-title">&#127897; Speaking</div>
+      <button class="btn btn-g btn-sm" onclick="openSP(-1)">+ Add Task</button>
+    </div>
+    <div class="lv-chips">
+      <span class="lv-chip${!filterLv?' active':''}" onclick="filterLv='';render()">All <span class="q-count-badge">${QB.speaking.length}</span></span>
+      ${LEVELS.map(lv=>`<span class="lv-chip${filterLv===lv?' active':''}" onclick="filterLv='${lv}';render()">${lv} <span class="q-count-badge">${spLvCounts.find(x=>x.lv===lv).cnt}</span></span>`).join('')}
+    </div>
+    <div class="filter-bar">
+      <input class="filter-input" placeholder="Search instruction..." value="${esc(filterQ)}" oninput="filterQ=this.value;render()">
+    </div>
+    <div class="section-stat">${spAllItems.length} shown</div>
+    ${items.length===0
+      ?`<div class="empty"><div class="empty-icon">&#127897;</div><div class="empty-title">No speaking tasks</div></div>`
+      :`<div class="q-list">${items.map(t=>{
+          const ri=QB.speaking.indexOf(t);
+          return `<div class="q-card">
+            <div class="q-card-top">
+              ${lvBadge(t.level)}
+              <span class="q-text">${esc((t.instruction||'').slice(0,100))}</span>
+            </div>
+            <div class="q-actions">
+              <span class="q-meta">Prep: ${t.prepSec||15}s &bull; Rec: ${t.recSec||40}s</span>
+              <button class="btn btn-xs btn-s" data-fn="openSP" data-id="${ri}">&#9998; Edit</button>
+              <button class="del-btn" data-fn="delSP" data-id="${ri}">&#128465;</button>
+            </div>
+          </div>`;
+        }).join('')}</div>`
+    }`;
+}
+
+function openSP(idx){
+  _editSP=parseInt(idx);
+  const t=_editSP>=0?QB.speaking[_editSP]:null;
+  $('spTitle').textContent=t?'Edit Task':'Add Speaking Task';
+  const gps=t?.guidingPrompts||['','',''];
+  $('spBody').innerHTML=`
+    <div class="fr">${lvSel('sp_lv',t?.level||'')}</div>
+    <div class="fr"><label class="fl">Instruction / Prompt</label><textarea class="fi ft" id="sp_inst" rows="3">${esc(t?.instruction||'')}</textarea></div>
+    <div class="fr"><label class="fl">Guiding Prompt 1</label><input class="fi" id="sp_g0" value="${esc(gps[0]||'')}"></div>
+    <div class="fr"><label class="fl">Guiding Prompt 2</label><input class="fi" id="sp_g1" value="${esc(gps[1]||'')}"></div>
+    <div class="fr"><label class="fl">Guiding Prompt 3</label><input class="fi" id="sp_g2" value="${esc(gps[2]||'')}"></div>
+    <div class="fr2">
+      <div><label class="fl">Prep Time (sec)</label><input class="fi" id="sp_prep" type="number" value="${t?.prepSec||15}"></div>
+      <div><label class="fl">Recording Time (sec)</label><input class="fi" id="sp_rec" type="number" value="${t?.recSec||40}"></div>
+    </div>`;
+  $('spModal').classList.add('open');
+}
+
+function saveSP(){
+  const lv=$('sp_lv')?.value,inst=$('sp_inst')?.value.trim();
+  if(!lv){toast('Select a level','err');return;}
+  if(!inst){toast('Enter instruction','err');return;}
+  const item={level:lv,instruction:inst,
+    guidingPrompts:[$('sp_g0')?.value.trim(),$('sp_g1')?.value.trim(),$('sp_g2')?.value.trim()].filter(Boolean),
+    prepSec:parseInt($('sp_prep')?.value)||15,recSec:parseInt($('sp_rec')?.value)||40};
+  if(_editSP>=0&&_editSP<QB.speaking.length) QB.speaking[_editSP]=item;
+  else QB.speaking.push(item);
+  closeModal('spModal');render();toast('Saved ✓','ok');
+}
+
+function delSP(idx){
+  const i=parseInt(idx);if(!confirm('Delete task?'))return;
+  QB.speaking.splice(i,1);render();toast('Deleted','warn');
+}
+
+// ══════════════════════════════════════════════════════
+// SETTINGS (I/O)
+// ══════════════════════════════════════════════════════
+let _indexHTML='';
+
+function uploadPicture(group, index, thumbId, inputId) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/jpeg,image/png,image/webp';
+  inp.onchange = function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    const kb = Math.round(file.size/1024);
+    if(file.size > 500000){
+      if(!confirm('This image is '+kb+'KB.\n\nLarge images increase index.html file size.\n'
+        +'Tip: Resize to 800x600 and compress to under 300KB for best results.\n\nContinue?')) return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const dataUrl = ev.target.result;
+      if(!QB.settings.pictureSets) QB.settings.pictureSets={};
+      if(!QB.settings.pictureSets[group]) QB.settings.pictureSets[group]=[];
+      if(!QB.settings.pictureSets[group][index])
+        QB.settings.pictureSets[group][index]={url:'',label:file.name};
+      QB.settings.pictureSets[group][index].url   = dataUrl;
+      QB.settings.pictureSets[group][index].label = file.name.replace(/\.[^.]+$/,'');
+      const img = document.getElementById(thumbId);
+      if(img){ img.src=dataUrl; img.style.opacity='1'; }
+      const inputEl = document.getElementById(inputId);
+      if(inputEl){
+        inputEl.value = '';
+        inputEl.placeholder = '\u{1F4C1} '+file.name+' ('+kb+'KB) — embedded';
+        inputEl.style.color = 'var(--green)';
+      }
+      toast('\u2713 '+file.name+' ('+kb+'KB) embedded — save index.html to apply', 'success');
+    };
+    reader.onerror = function(){ toast('File read error','error'); };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function updatePicture(group, index, url, thumbId, inputId) {
+  if(!QB.settings.pictureSets) QB.settings.pictureSets = {};
+  if(!QB.settings.pictureSets[group]) QB.settings.pictureSets[group] = [];
+  if(!QB.settings.pictureSets[group][index])
+    QB.settings.pictureSets[group][index] = {url:'',label:'Image '+(index+1)};
+  QB.settings.pictureSets[group][index].url = url;
+  if(thumbId){ const img=document.getElementById(thumbId); if(img){img.src=url;img.style.opacity='1';} }
+  toast('Image updated — Save & Download index.html to apply', 'success');
+}
+
+function renderSettings(el){
+  const stats=LEVELS.map(lv=>{
+    const gv=QB.grammarVocab.filter(q=>q.level===lv).length;
+    const rd=QB.reading.filter(p=>p.level===lv).length;
+    const ls=QB.listening.filter(t=>t.level===lv).length;
+    const wr=QB.writing.filter(t=>t.level===lv).length;
+    const sp=QB.speaking.filter(t=>t.level===lv).length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdl)">
+      ${lvBadge(lv)}
+      <span style="font-size:12px;color:var(--txm)">GV:<b>${gv}</b>&nbsp;RD:<b>${rd}</b>&nbsp;LS:<b>${ls}</b>&nbsp;WR:<b>${wr}</b>&nbsp;SP:<b>${sp}</b></span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="page-hd"><div class="page-title">&#9881; Settings & I/O</div></div>
+
+    <div class="set-card" style="border:2px solid var(--g)">
+      <div class="set-hd" style="color:var(--g)">&#8679; Step 1: Load index.html</div>
+      <div class="set-desc">Upload your current index.html to import the question bank. <strong>Do this first before making changes.</strong></div>
+      <div class="io-zone" onclick="loadFile()">
+        <div class="io-title" style="color:var(--g)">&#8679; Choose index.html</div>
+        <div class="io-sub">Tap to browse for file</div>
+      </div>
+      ${_indexHTML?'<div style="font-size:12px;color:var(--green);margin-top:8px;font-weight:600">&#10003; index.html loaded — '+QB.grammarVocab.length+' GV · '+QB.reading.length+' RD · '+QB.listening.length+' LS · '+QB.writing.length+' WR · '+QB.speaking.length+' SP</div>':'<div style="font-size:11.5px;color:var(--amber);margin-top:8px">&#9888; No file loaded yet</div>'}
+    </div>
+
+    <div class="set-card">
+      <div class="set-hd">&#128202; Import from Excel</div>
+      <div class="set-desc">Import questions from MEC_QBank.xlsx using GV / Reading / Listening / Writing / Speaking sheets.</div>
+      <div class="io-zone" onclick="importExcel()">
+        <div class="io-title">&#128202; Import Excel (.xlsx)</div>
+        <div class="io-sub">Supports all 5 sections</div>
+      </div>
+    </div>
+
+    <div class="set-card" style="border:2px solid var(--cu)">
+      <div class="set-hd" style="color:var(--cu)">&#128640; Step 2: Save to index.html</div>
+      <div class="set-desc">After editing questions, patch the index.html and download it for deployment. <strong>Load index.html first (Step 1).</strong></div>
+      <button class="btn btn-g" onclick="exportPatchedHTML()" style="width:100%;justify-content:center;padding:13px;font-size:15px">
+        &#128640; Save &amp; Download index.html
+      </button>
+      <button class="btn btn-s" onclick="exportJSON()" style="width:100%;justify-content:center;margin-top:8px">
+        &#11015; Export JSON backup
+      </button>
+    </div>
+
+    <div class="set-card">
+      <div class="set-hd">&#11015; Export JSON</div>
+      <div class="set-desc">Download question bank as raw JSON (backup).</div>
+      <button class="btn btn-s" onclick="exportJSON()" style="width:100%;justify-content:center">&#11015; Export JSON</button>
+    </div>
+
+    <div class="set-card" style="border:2px solid var(--cu)">
+      <div class="set-hd" style="color:var(--cu)">&#127911; ElevenLabs — Natural Voice Generation</div>
+      <div class="set-desc">Generate realistic AI voices for all listening scripts. Free plan: 10,000 chars/month. <a href="https://elevenlabs.io" target="_blank" style="color:var(--cu)">Get free API key →</a></div>
+
+      ${(() => {
+        const a = audioGenStats();
+        const pct = a.totalTurns>0 ? Math.round(a.doneTurns/a.totalTurns*100) : 0;
+        const statusColor = pct===100 ? '#059669' : (pct>0 ? '#D97706' : '#6B7280');
+        return `<div style="background:#F9FAFB;border-radius:10px;padding:12px 14px;margin-bottom:12px;border-left:3px solid ${statusColor}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-size:12px;font-weight:700;color:${statusColor}">Audio Generation Status</div>
+            <div style="font-size:11px;color:#6B7280">${a.doneTurns} / ${a.totalTurns} turns uploaded</div>
+          </div>
+          <div style="background:#E5E7EB;border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
+            <div style="background:${statusColor};height:100%;width:${pct}%;transition:width .3s"></div>
+          </div>
+          <div style="font-size:11px;color:#6B7280">
+            Scripts: <b style="color:#059669">${a.fullyDone} done</b> · 
+            <b style="color:#D97706">${a.partial} partial</b> · 
+            <b style="color:#6B7280">${a.notStarted} pending</b>
+          </div>
+        </div>`;
+      })()}
+
+      <div style="margin-bottom:10px">
+        <label class="fl">API Key</label>
+        <input class="fi" id="el_api_key" type="password" placeholder="Paste your ElevenLabs API key here" value="${EL_API_KEY}">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="fl">Speaker A Voice (Female)</label>
+          <select class="fi" id="el_voice_a">
+            ${EL_VOICES.filter(v=>v.gender==='F').map(v=>`<option value="${v.id}"${EL_VOICE_A===v.id?' selected':''}>${v.name}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="fl">Speaker B Voice (Male)</label>
+          <select class="fi" id="el_voice_b">
+            ${EL_VOICES.filter(v=>v.gender==='M').map(v=>`<option value="${v.id}"${EL_VOICE_B===v.id?' selected':''}>${v.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="fl">AI Model</label>
+        <select class="fi" id="el_model" style="max-width:280px">
+          <option value="eleven_multilingual_v2"${EL_MODEL==='eleven_multilingual_v2'?' selected':''}>eleven_multilingual_v2 (Recommended)</option>
+          <option value="eleven_turbo_v2"${EL_MODEL==='eleven_turbo_v2'?' selected':''}>eleven_turbo_v2 (Faster)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:var(--g);color:#fff" onclick="saveElSettings()">Save EL Settings</button>
+        <button class="btn btn-sm btn-s" onclick="previewVoice(EL_VOICE_A)">&#9654; Preview A</button>
+        <button class="btn btn-sm btn-s" onclick="previewVoice(EL_VOICE_B)">&#9654; Preview B</button>
+      </div>
+
+      <div style="margin-top:14px;padding:12px;background:linear-gradient(135deg,#FEF3C7,#FED7AA);border-radius:10px;border-left:3px solid var(--cu)">
+        <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:6px">&#127911; Bulk Generation (recommended)</div>
+        <div style="font-size:11.5px;color:#78350F;line-height:1.5;margin-bottom:10px">
+          Auto-rotates through 6 voice pairs (US/UK mix) for variety. Uploads to Firebase Storage.
+          Skips already-generated turns.
+        </div>
+        <button class="btn btn-sm" style="background:var(--cu);color:#fff;width:100%;justify-content:center;font-weight:700;padding:12px" onclick="generateAllAudio()">
+          &#127911; Generate ALL Audio (UK + US mix)
+        </button>
+      </div>
+
+      <div style="font-size:11px;color:var(--txl);margin-top:10px;line-height:1.5">
+        <strong>Workflow:</strong> Save API key → Generate ALL → Listening tab to verify → Step 2: Save index.html → Deploy
+      </div>
+    </div>
+
+    <div class="set-card">
+      <div class="set-hd">&#128200; Current Stats</div>
+      ${stats}
+    </div>`;
+
+  // ── Picture Set Management ──────────────────────────────────
+  const picGroups = [
+    {key:'simple',label:'Simple (Pre-A1 ~ A1)',desc:'Everyday scenes — objects, colours, people, basic actions'},
+    {key:'active',label:'Active (A2 ~ B1)',desc:'People doing things — actions, relationships, locations'},
+    {key:'complex',label:'Complex (B2 ~ C1)',desc:'Multi-layered scenes — analysis, contrast, interpretation'},
+  ];
+  let picHTML = '<div class="set-card" style="border:1px solid var(--cu)">';
+  picHTML += '<div class="set-hd" style="color:var(--cu)">&#128247; Speaking Picture Sets</div>';
+  picHTML += '<div class="set-desc">3 image groups for picture-description speaking tasks (Task 1). Each group has 3 images. One is randomly shown per test.</div>';
+  picGroups.forEach(({key,label,desc})=>{
+    const pics = QB.settings.pictureSets?.[key] || [];
+    picHTML += '<div style="margin-top:14px"><div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:2px">'+label+'</div>';
+    picHTML += '<div style="font-size:11px;color:var(--txl);margin-bottom:8px">'+desc+'</div>';
+    pics.forEach((pic,i)=>{
+      const isData  = pic.url && pic.url.startsWith('data:');
+      const sizeKB  = isData ? Math.round(pic.url.length*0.75/1024) : 0;
+      const inputVal= isData ? '' : (pic.url||'');
+      const inputPH = isData ? '\uD83D\uDCC1 '+pic.label+' ('+sizeKB+'KB embedded)' : 'Paste image URL...';
+      const thumbId = 'pic_thumb_'+key+'_'+i;
+      const inputId = 'pic_url_'+key+'_'+i;
+      picHTML += '<div style="background:var(--bg);border:1px solid var(--bdl);border-radius:10px;padding:10px 12px;margin-bottom:8px">';
+      picHTML += '<div style="display:flex;gap:10px;align-items:flex-start">';
+      picHTML += '<img id="'+thumbId+'" src="'+(pic.url||'')+'" style="width:80px;height:56px;border-radius:7px;object-fit:cover;border:1px solid var(--bdl);background:#F3F4F6;flex-shrink:0" onerror="this.style.opacity=0.15">';
+      picHTML += '<div style="flex:1;min-width:0">';
+      picHTML += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--txl);margin-bottom:5px">'+pic.label+'</div>';
+      picHTML += '<div style="display:flex;gap:6px;align-items:center">';
+      picHTML += '<input id="'+inputId+'" type="text" placeholder="'+inputPH+'" value="'+inputVal+'" '
+               + 'style="flex:1;min-width:0;padding:7px 9px;border:1px solid var(--bdl);border-radius:7px;font-size:11px;font-family:inherit" '
+               + 'onchange="updatePicture(\''+key+'\','+i+',this.value,\''+thumbId+'\',\''+inputId+'\')">';
+      picHTML += '<button onclick="uploadPicture(\''+key+'\','+i+',\''+thumbId+'\',\''+inputId+'\')" '
+               + 'style="flex-shrink:0;padding:7px 11px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">'
+               + '&#128193; Upload</button>';
+      picHTML += '</div>';
+      if(isData){ picHTML += '<div style="font-size:10px;color:var(--green);margin-top:4px;font-weight:600">&#10003; Embedded ('+sizeKB+'KB)</div>'; }
+      else if(pic.url){ picHTML += '<div style="font-size:10px;color:var(--txl);margin-top:4px">External URL</div>'; }
+      else { picHTML += '<div style="font-size:10px;color:var(--amber);margin-top:4px">&#9888; No image set</div>'; }
+      picHTML += '</div>';
+      picHTML += '</div>';
+      picHTML += '</div>';
+    });
+    picHTML += '</div>';
+  });
+  picHTML += '<div style="font-size:11px;color:var(--txl);margin-top:10px">Tip: Use Unsplash, Pexels, or your own hosted images. Images are displayed full-width to students during speaking prep time.</div>';
+  picHTML += '</div>';
+  el.innerHTML += picHTML;
+
+}
+
+// ══════════════════════════════════════════════════════
+// FILE I/O
+// ══════════════════════════════════════════════════════
+function loadFile(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.html';
+  inp.onchange=async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const text=await file.text(); _indexHTML=text;
+    const s=text.indexOf('const QBANK=');
+    if(s<0){toast('QBANK not found in file','err');return;}
+    let depth=0,inStr=false,strCh,i=s+12,end=0;
+    while(i<text.length){
+      const c=text[i];
+      if(inStr){if(c==='\\'){i+=2;continue;}if(c===strCh)inStr=false;}
+      else{if(c==='"'||c==="'"){inStr=true;strCh=c;}else if(c==='{')depth++;
+        else if(c==='}'){depth--;if(depth===0){end=i+1;break;}}}
+      i++;
+    }
+    try{
+      const loaded=JSON.parse(text.slice(s+12,end));
+      // Merge settings from loaded QB
+      if(loaded.settings) QB.settings=Object.assign(QB.settings,loaded.settings);
+      // Load question data
+      QB.grammarVocab=loaded.grammarVocab||[];
+      QB.reading=loaded.reading||[];
+      QB.listening=loaded.listening||[];
+      QB.writing=loaded.writing||[];
+      QB.speaking=loaded.speaking||[];
+      toast(`Loaded: ${QB.grammarVocab.length} GV, ${QB.reading.length} RD, ${QB.listening.length} LS, ${QB.writing.length} WR, ${QB.speaking.length} SP`,'ok');
+      render();
+    }catch(err){toast('Parse error: '+err.message,'err');}
+  };
+  inp.click();
+}
+
+function exportPatchedHTML(){
+  const _emb=Object.values(QB.settings.pictureSets||{}).flat().filter(p=>p&&p.url&&p.url.startsWith('data:'));
+  if(_emb.length){
+    const _kb=_emb.reduce((s,p)=>s+Math.round(p.url.length*0.75/1024),0);
+    if(_kb>2000&&!confirm(_emb.length+' embedded image(s) add ~'+_kb+'KB.\nContinue?')) return;
+  }
+  if(!_indexHTML){toast('Load index.html first','err');return;}
+  const s=_indexHTML.indexOf('const QBANK=');
+  let depth=0,inStr=false,strCh,i=s+12,end=0;
+  while(i<_indexHTML.length){
+    const c=_indexHTML[i];
+    if(inStr){if(c==='\\'){i+=2;continue;}if(c===strCh)inStr=false;}
+    else{if(c==='"'||c==="'"){inStr=true;strCh=c;}else if(c==='{')depth++;
+      else if(c==='}'){depth--;if(depth===0){end=i+1;break;}}}
+    i++;
+  }
+  // Update settings in QB before saving
+  const exportQB={...QB};
+  const patched=_indexHTML.slice(0,s)+'const QBANK='+JSON.stringify(exportQB)+_indexHTML.slice(end);
+
+  // Also patch GM_TOTALS/RD_PASS/LS_TASKS constants
+  let final=patched;
+  // Patch PICTURE_SETS constant in index.html
+  if(QB.settings.pictureSets){
+    const ps=QB.settings.pictureSets;
+    const mkArr=arr=>arr.map(p=>`{url:'${p.url}',label:'${p.label}'}`).join(',');
+    const newPS=`const PICTURE_SETS = {\n  simple:[${mkArr(ps.simple||[])}],\n  active:[${mkArr(ps.active||[])}],\n  complex:[${mkArr(ps.complex||[])}]\n};`;
+    final=final.replace(/const PICTURE_SETS\s*=\s*\{[\s\S]*?\};\s*\n\s*\/\/ Which picture/,newPS+'\n// Which picture');
+  }
+
+  // GM_TOTALS
+  const gmStr=`{'Pre-A1':${QB.settings.gmTotals['Pre-A1']},'A1':${QB.settings.gmTotals['A1']},'A2':${QB.settings.gmTotals['A2']},'B1':${QB.settings.gmTotals['B1']},'B2':${QB.settings.gmTotals['B2']},'C1':${QB.settings.gmTotals['C1']}}`;
+  final=final.replace(/const GM_TOTALS\s*=\s*\{[^}]+\}/,`const GM_TOTALS = ${gmStr}`);
+  // RD_PASS
+  const rdStr=`lv => ({'Pre-A1':${QB.settings.rdPass['Pre-A1']},'A1':${QB.settings.rdPass['A1']},'A2':${QB.settings.rdPass['A2']},'B1':${QB.settings.rdPass['B1']},'B2':${QB.settings.rdPass['B2']},'C1':${QB.settings.rdPass['C1']}}[lv]||2)`;
+  final=final.replace(/const RD_PASS\s*=\s*lv\s*=>\s*\([^)]+\[lv\]\|\|2\)/,`const RD_PASS = ${rdStr}`);
+  // LS_TASKS
+  const lsStr=`lv => ({'Pre-A1':${QB.settings.lsTasks['Pre-A1']},'A1':${QB.settings.lsTasks['A1']},'A2':${QB.settings.lsTasks['A2']},'B1':${QB.settings.lsTasks['B1']},'B2':${QB.settings.lsTasks['B2']},'C1':${QB.settings.lsTasks['C1']}}[lv]||2)`;
+  final=final.replace(/const LS_TASKS\s*=\s*lv\s*=>\s*\([^)]+\[lv\]\|\|2\)/,`const LS_TASKS = ${lsStr}`);
+  // WR_TASKS (if exists, otherwise add)
+  const wrT=QB.settings.wrTasks||{};
+  const wrStr=`lv => ({'Pre-A1':${wrT['Pre-A1']||1},'A1':${wrT['A1']||1},'A2':${wrT['A2']||1},'B1':${wrT['B1']||1},'B2':${wrT['B2']||2},'C1':${wrT['C1']||2}}[lv]||1)`;
+  if(/const WR_TASKS/.test(final)) final=final.replace(/const WR_TASKS\s*=\s*lv\s*=>\s*\([^)]+\[lv\]\|\|\d+\)/,`const WR_TASKS = ${wrStr}`);
+  // SP_TASKS
+  const spT=QB.settings.spTasks||{};
+  const spStr=`lv => ({'Pre-A1':${spT['Pre-A1']||1},'A1':${spT['A1']||1},'A2':${spT['A2']||1},'B1':${spT['B1']||1},'B2':${spT['B2']||2},'C1':${spT['C1']||2}}[lv]||1)`;
+  if(/const SP_TASKS/.test(final)) final=final.replace(/const SP_TASKS\s*=\s*lv\s*=>[^;]+;/,`const SP_TASKS = ${spStr};`);
+
+  const blob=new Blob([final],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='index.html'; a.click();
+  toast('index.html saved! Deploy to Netlify.','ok');
+}
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(QB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='MEC_QBank.json'; a.click(); toast('JSON exported','ok');
+}
+
+function importExcel(){
+  if(typeof XLSX==='undefined'){toast('SheetJS not loaded','err');return;}
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.xlsx,.xls';
+  inp.onchange=async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    let added={gv:0,rd:0,ls:0,wr:0,sp:0};
+
+    // GV
+    const gvS=wb.Sheets['GV']||wb.Sheets['GV — Grammar & Vocab']||wb.Sheets['GV - Grammar & Vocab'];
+    if(gvS){
+      const rows=XLSX.utils.sheet_to_json(gvS,{header:1,defval:''});
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i];
+        const lv=String(r[0]||'').trim(),q=String(r[2]||'').trim();
+        if(!lv||!q||!LEVELS.includes(lv)) continue;
+        const opts=[r[4],r[5],r[6],r[7]].map(x=>String(x||'').trim()).filter(Boolean);
+        if(opts.length<2) continue;
+        const ci=Math.max(0,['A','B','C','D'].indexOf(String(r[8]||'A').trim().toUpperCase()));
+        const item={id:genId('GV'),level:lv,type:String(r[1]||'MCQ-C').trim(),
+          question:q,stimulus:String(r[3]||'').trim(),options:opts,correctIndex:ci};
+        if(!QB.grammarVocab.some(x=>x.question===q)){QB.grammarVocab.push(item);added.gv++;}
+      }
+    }
+    // Reading
+    const rdS=wb.Sheets['Reading'];
+    if(rdS){
+      const rows=XLSX.utils.sheet_to_json(rdS,{header:1,defval:''});
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i];
+        const lv=String(r[0]||'').trim(),title=String(r[2]||'').trim(),text=String(r[3]||'').trim();
+        if(!lv||!title||!text||!LEVELS.includes(lv)) continue;
+        if(QB.reading.some(x=>x.title===title)) continue;
+        const qs=[];
+        [[4,10],[11,17],[18,24],[25,31]].forEach(([s2])=>{
+          const qt=String(r[s2+1]||'').trim(); if(!qt) return;
+          const opts=[r[s2+2],r[s2+3],r[s2+4],r[s2+5]].map(x=>String(x||'').trim()).filter(Boolean);
+          if(opts.length<2) return;
+          const ci=Math.max(0,['A','B','C','D'].indexOf(String(r[s2+6]||'A').trim().toUpperCase()));
+          qs.push({type:String(r[s2]||'detail').trim(),question:qt,options:opts,correctIndex:ci});
+        });
+        QB.reading.push({id:genId('RD'),level:lv,textType:String(r[1]||'informational').trim(),title,text,questions:qs});
+        added.rd++;
+      }
+    }
+    // Listening
+    const lsS=wb.Sheets['Listening'];
+    if(lsS){
+      const rows=XLSX.utils.sheet_to_json(lsS,{header:1,defval:''});
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i];
+        const lv=String(r[0]||'').trim(),title=String(r[3]||'').trim();
+        if(!lv||!title||!LEVELS.includes(lv)) continue;
+        if(QB.listening.some(x=>x.title===title)) continue;
+        const chars=[
+          {name:String(r[5]||'Speaker A').trim(),role:String(r[6]||'').trim(),side:'left',emoji:'👩'},
+          {name:String(r[7]||'Speaker B').trim(),role:String(r[8]||'').trim(),side:'right',emoji:'👨'}
+        ];
+        const turns=[];
+        for(let t=0;t<6;t++){
+          const txt=String(r[10+t*2]||'').trim();
+          if(txt) turns.push({speakerIndex:String(r[9+t*2]||'0').trim()==='1'?1:0,text:txt});
+        }
+        if(!turns.length) continue;
+        const qs=[];
+        [[19,24],[25,30],[31,36]].forEach(([s2])=>{
+          const qt=String(r[s2]||'').trim(); if(!qt) return;
+          const opts=[r[s2+1],r[s2+2],r[s2+3],r[s2+4]].map(x=>String(x||'').trim()).filter(Boolean);
+          if(opts.length<2) return;
+          const ci=Math.max(0,['A','B','C','D'].indexOf(String(r[s2+5]||'A').trim().toUpperCase()));
+          qs.push({type:'detail',question:qt,options:opts,correctIndex:ci});
+        });
+        const spd=parseFloat(String(r[2]||'82').replace('%',''))/100||0.82;
+        QB.listening.push({id:genId('LS'),level:lv,format:String(r[1]||'dialogue').trim(),
+          title,taskContext:String(r[4]||'').trim(),speed:spd,characters:chars,turns,questions:qs});
+        added.ls++;
+      }
+    }
+    // Writing
+    const wrS=wb.Sheets['Writing'];
+    if(wrS){
+      const rows=XLSX.utils.sheet_to_json(wrS,{header:1,defval:''});
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i];
+        const lv=String(r[0]||'').trim(),inst=String(r[2]||'').trim();
+        if(!lv||!inst||!LEVELS.includes(lv)) continue;
+        if(QB.writing.some(x=>x.instruction===inst)) continue;
+        QB.writing.push({id:genId('WT'),level:lv,taskType:String(r[1]||'').trim(),
+          instruction:inst,context:String(r[3]||'').trim(),wordRange:String(r[4]||'').trim(),
+          sentenceFrames:String(r[5]||'').trim()});
+        added.wr++;
+      }
+    }
+    // Speaking
+    const spS=wb.Sheets['Speaking'];
+    if(spS){
+      const rows=XLSX.utils.sheet_to_json(spS,{header:1,defval:''});
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i];
+        const lv=String(r[0]||'').trim(),inst=String(r[1]||'').trim();
+        if(!lv||!inst||!LEVELS.includes(lv)) continue;
+        if(QB.speaking.some(x=>x.instruction===inst)) continue;
+        QB.speaking.push({level:lv,instruction:inst,
+          guidingPrompts:[r[2],r[3],r[4]].map(x=>String(x||'').trim()).filter(Boolean),
+          prepSec:parseInt(r[5])||15,recSec:parseInt(r[6])||40});
+        added.sp++;
+      }
+    }
+    const total=Object.values(added).reduce((a,b)=>a+b,0);
+    if(!total) toast('No new items — check sheet names','warn');
+    else{ toast(`Added: GV+${added.gv} RD+${added.rd} LS+${added.ls} WR+${added.wr} SP+${added.sp}`,'ok'); render(); }
+  };
+  inp.click();
+}
+
+// ══════════════════════════════════════════════════════
+// ELEVENLABS AUDIO GENERATION
+// ══════════════════════════════════════════════════════
+
+// Default voices — user can override in Settings
+
+// ██████████████████████████████████████████████████████████████
+// MEC ACADEMY — SCORING ALGORITHM REFERENCE
+// Version 2.0  |  Updated April 2026
+// Basis: IRT-inspired CAT + Cambridge/IELTS CEFR placement standards
+// ██████████████████████████████████████████████████████████████
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 1: TEST FLOW (ORDER MATTERS)
+// ═══════════════════════════════════════════════════════════════
+//
+//  ┌─────────────────────────────────────────────────────────┐
+//  │  Step 1: Self-Assessment (4 questions)                  │
+//  │  → Determines CAT START LEVEL only (not final score)    │
+//  │  → Score 0-17 → mapped to Pre-A1 / A1 / A2 / B1 / B2  │
+//  │    0–2=Pre-A1 | 3–5=A1 | 6–8=A2 | 9–12=B1 | 13–15=B2 │
+//  │    16+=C1                                               │
+//  ├─────────────────────────────────────────────────────────┤
+//  │  Step 2: Grammar & Vocabulary (CAT, 8–18 items)         │
+//  │  → Adaptive: difficulty adjusts per response            │
+//  │  → Result used as anchor for ALL subsequent sections    │
+//  ├─────────────────────────────────────────────────────────┤
+//  │  Step 3: Reading (1–2 passages, adaptive)               │
+//  │  → STARTS at Grammar CEFR − 1 level (for B1+)          │
+//  │  → Rationale: reading lags grammar by ~0.5–1 level      │
+//  ├─────────────────────────────────────────────────────────┤
+//  │  Step 4: Listening (1–2 tasks, adaptive)  ← BEFORE WR  │
+//  │  → Before writing to avoid fatigue contamination        │
+//  │  → Speed: 0.80–1.0x (no distortion below 0.80x)        │
+//  ├─────────────────────────────────────────────────────────┤
+//  │  Step 5: Writing (1–2 tasks, level-appropriate)         │
+//  │  → Word targets: Pre-A1:10-20 | A1:25-40 | A2:40-60   │
+//  │    B1:70-100 | B2:100-130 | C1:140-170                 │
+//  ├─────────────────────────────────────────────────────────┤
+//  │  Step 6: Speaking (1–2 tasks, recorded)                 │
+//  └─────────────────────────────────────────────────────────┘
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 2: GRAMMAR/VOCAB CAT ALGORITHM (confirmGV)
+// ═══════════════════════════════════════════════════════════════
+//
+//  Rule: 1-UP / 2-DOWN  (psychophysics adaptive method)
+//  ─────────────────────────────────────────────────────────────
+//  WRONG answer:   Immediate −1 level  (strong downward signal)
+//                  Consecutive wrong counter +1
+//  CORRECT answer: Must get 2 in a row to move +1 level
+//                  (prevents lucky-guess inflation)
+//
+//  Example trace (B1 student starts at A2):
+//  Q1 A2 ✓ → streak=1 (wait)
+//  Q2 A2 ✓ → streak=2 → move to B1
+//  Q3 B1 ✗ → drop to A2 immediately
+//  Q4 A2 ✓ → streak=1 (wait)
+//  Q5 A2 ✗ → drop to A1
+//  Q6 A1 ✓ → streak=1 (wait)
+//  Q7 A1 ✓ → streak=2 → move to A2
+//  → Final history: A2(1/2) B1(0/1) A2(1/1) A1(1/2) A2(0/0) → gmCEFR = A2
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 3: gmCEFR() — FINAL GRAMMAR BAND DETERMINATION
+// ═══════════════════════════════════════════════════════════════
+//
+//  Tiered confidence thresholds (ETS/Cambridge-inspired):
+//  ─────────────────────────────────────────────────────────────
+//  Items at level │ Pass threshold │ Rationale
+//  ───────────────┼────────────────┼──────────────────────────
+//  ≥ 3 items      │ ≥ 50%          │ Standard (sufficient data)
+//  2 items        │ ≥ 67%          │ Small sample → higher bar
+//  1 item         │ 100% + adjacent│ Single item unreliable alone
+//
+//  Algorithm: scan from C1 → Pre-A1, return FIRST level meeting threshold
+//  If no level meets threshold → return Pre-A1
+//
+//  IMPORTANT: determineFinalLevel() does NOT add bonus levels.
+//  The old +1 level for 80% overall was removed (unjustified).
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 4: READING BAND (rdCEFR) — SCORE-GATED
+// ═══════════════════════════════════════════════════════════════
+//
+//  Score-gate table:
+//  ─────────────────────────────────────────────────────────────
+//  Score at adaptive level │ Band adjustment
+//  ────────────────────────┼────────────────────────────────────
+//  ≥ 50%                   │ Confirm raw adaptive level
+//  30 – 49%                │ Drop 1 level (struggling)
+//  < 30%                   │ Drop 2 levels (not at this level)
+//  0%                      │ Drop 2 levels (no evidence)
+//
+//  rdTotal() = simple average of passage 1 and passage 2 (equal weight)
+//  rdLevel starts at Grammar − 1 for B1+ students
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 5: LISTENING BAND (lstCEFR) — SAME SCORE-GATE
+// ═══════════════════════════════════════════════════════════════
+//
+//  Identical score-gate rules as rdCEFR above.
+//  lstTotal() = raw percentage across all listening tasks
+//
+//  Speed settings (min 0.80x to prevent distortion):
+//  Pre-A1:0.80 | A1:0.82 | A2:0.85 | B1:0.88 | B2:0.92 | C1:1.0
+//
+//  Branching in loadNextLST():
+//  ≥ 75% on task → move UP 1 level for next task
+//  < 50% on task → move DOWN 1 level for next task
+//  50–74% → stay at current level
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 6: FINAL PLACEMENT (testLevel)
+// ═══════════════════════════════════════════════════════════════
+//
+//  1. Base = gmCEFR()  (Grammar is the primary anchor)
+//  2. Cross-validate with receptive skills:
+//     If reading% < 40% AND rdCEFR < grammar → cap final = rdCEFR + 1
+//     If listening% < 40% AND lstCEFR < grammar → cap final = lstCEFR + 1
+//  3. Apply score-gated rdCEFR and lstCEFR (see Sections 4 & 5)
+//
+//  RATIONALE: A student cannot be placed in a class they cannot
+//  comprehend. If receptive skills (reading/listening) are weak,
+//  they will struggle regardless of grammar knowledge.
+//
+//  Example: Grammar=C1(57%), Reading=B2(30%), Listening=C1(0%)
+//  → rdCEFR:  B2, score 30% < 50% → drop 1 → B1
+//  → lstCEFR: C1, score 0% < 30% → drop 2 → B1
+//  → testLevel: gmI=5(C1), rdSc=30<40 → cap to rdI+1=4(B2)
+//               lsSc=0<40  → cap to lsI+1=4(B2)
+//  → FINAL: B2 (defensible to parents: "strong grammar but needs
+//             receptive skill development before C1 class")
+//
+// ═══════════════════════════════════════════════════════════════
+// SECTION 7: KNOWN LIMITATIONS & FUTURE IMPROVEMENTS
+// ═══════════════════════════════════════════════════════════════
+//
+//  Current limitations:
+//  • Writing/Speaking not factored into final CEFR band
+//    (AI rubric score integration planned)
+//  • Self-assessment bias (±1.5 levels) not corrected during CAT
+//    (early CAT performance could adjust intake estimate)
+//  • Speaking scored by teacher, not factored into automated band
+//
+//  Cambridge/IELTS reference comparisons:
+//  • Cambridge KET (A2): ~70% overall pass
+//  • Cambridge PET (B1): ~60% overall pass
+//  • IELTS Band 5.0 ≈ B1 | Band 6.0 ≈ B2 | Band 7.0 ≈ C1
+//
+// ██████████████████████████████████████████████████████████████
+// END ALGORITHM REFERENCE
+// ██████████████████████████████████████████████████████████████
+
+// Load saved EL settings from localStorage on page load
+let EL_API_KEY = '';
+let EL_VOICE_A_DEFAULT = '21m00Tcm4TlvDq8ikWAM'; // Rachel
+let EL_VOICE_B_DEFAULT = 'pNInz6obpgDQGcFmaJgB'; // Adam
+
+try {
+  const saved = localStorage.getItem('mec_el_settings');
+  if(saved) {
+    const s = JSON.parse(saved);
+    if(s.apiKey) EL_API_KEY = s.apiKey;
+    if(s.voiceA) EL_VOICE_A_DEFAULT = s.voiceA;
+    if(s.voiceB) EL_VOICE_B_DEFAULT = s.voiceB;
+  }
+} catch(e) { console.warn('EL settings load failed:', e); }
+let EL_VOICE_A = EL_VOICE_A_DEFAULT;
+let EL_VOICE_B = EL_VOICE_B_DEFAULT;
+let EL_MODEL   = 'eleven_multilingual_v2';
+
+// Popular ElevenLabs voices — US + UK mix
+const EL_VOICES = [
+  // US Female
+  {id:'21m00Tcm4TlvDq8ikWAM', name:'Rachel (F, US)',   gender:'F', accent:'US'},
+  {id:'EXAVITQu4vr4xnSDxMaL', name:'Bella (F, US)',    gender:'F', accent:'US'},
+  {id:'MF3mGyEYCl7XYWbV9V6O', name:'Elli (F, US)',     gender:'F', accent:'US'},
+  // UK Female
+  {id:'ThT5KcBeYPX3keUQqHPh', name:'Dorothy (F, UK)',  gender:'F', accent:'UK'},
+  {id:'pFZP5JQG7iQjIQuC4Bku', name:'Lily (F, UK)',     gender:'F', accent:'UK'},
+  {id:'XB0fDUnXU5powFXDhCwa', name:'Charlotte (F, UK)',gender:'F', accent:'UK'},
+  // US Male
+  {id:'pNInz6obpgDQGcFmaJgB', name:'Adam (M, US)',     gender:'M', accent:'US'},
+  {id:'VR6AewLTigWG4xSOukaG', name:'Arnold (M, US)',   gender:'M', accent:'US'},
+  {id:'TxGEqnHWrfWFTfGW9XjX', name:'Josh (M, US)',     gender:'M', accent:'US'},
+  {id:'ErXwobaYiN019PkySvjV', name:'Antoni (M, US)',   gender:'M', accent:'US'},
+  // UK Male
+  {id:'onwK4e9ZLuTAKqWW03F9', name:'Daniel (M, UK)',   gender:'M', accent:'UK'},
+  {id:'JBFqnCBsd6RMkjVDRZzb', name:'George (M, UK)',   gender:'M', accent:'UK'},
+];
+
+// Voice pairs for auto-rotate (mix of UK/US for variety)
+const EL_VOICE_PAIRS = [
+  {label:'US Classic',  A:'21m00Tcm4TlvDq8ikWAM', B:'pNInz6obpgDQGcFmaJgB'}, // Rachel + Adam
+  {label:'UK Classic',  A:'ThT5KcBeYPX3keUQqHPh', B:'onwK4e9ZLuTAKqWW03F9'}, // Dorothy + Daniel
+  {label:'US Young',    A:'EXAVITQu4vr4xnSDxMaL', B:'TxGEqnHWrfWFTfGW9XjX'}, // Bella + Josh
+  {label:'UK Young',    A:'pFZP5JQG7iQjIQuC4Bku', B:'JBFqnCBsd6RMkjVDRZzb'}, // Lily + George
+  {label:'Mix A',       A:'MF3mGyEYCl7XYWbV9V6O', B:'onwK4e9ZLuTAKqWW03F9'}, // Elli(US) + Daniel(UK)
+  {label:'Mix B',       A:'XB0fDUnXU5powFXDhCwa', B:'pNInz6obpgDQGcFmaJgB'}, // Charlotte(UK) + Adam(US)
+];
+
+// ═══════════════════════════════════════════════════════════
+// Firebase Storage (lazy-loaded on first audio generation)
+// ═══════════════════════════════════════════════════════════
+
+// localStorage backup for long-running operations (audio generation)
+function saveQB() {
+  try {
+    const snapshot = JSON.stringify({ qb: QB, ts: Date.now() });
+    // Only save if snapshot is under 5MB (localStorage limit)
+    if(snapshot.length < 4.5 * 1024 * 1024) {
+      localStorage.setItem('mec_qbank_backup', snapshot);
+    }
+  } catch(e) {
+    // localStorage full or disabled — ignore
+    console.warn('saveQB backup skipped:', e.message);
+  }
+}
+
+function loadQBBackup() {
+  try {
+    const raw = localStorage.getItem('mec_qbank_backup');
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    // Only offer if backup is less than 24h old
+    if(Date.now() - data.ts > 24*60*60*1000) return null;
+    return data.qb;
+  } catch(e) { return null; }
+}
+
+function clearQBBackup() {
+  try { localStorage.removeItem('mec_qbank_backup'); } catch(e) {}
+}
+
+const FB_CONFIG = {
+  apiKey:            'AIzaSyB8EBr-fAcGZGcqL1tgMgMzjrHkJz7N73s',
+  authDomain:        'mec-placement.firebaseapp.com',
+  projectId:         'mec-placement',
+  storageBucket:     'mec-placement.firebasestorage.app',
+  messagingSenderId: '610815942283',
+  appId:             '1:610815942283:web:2737a1d461880b4fa1be8e'
+};
+let _fbStorage = null;
+let _fbRef = null;
+let _fbUploadBytes = null;
+let _fbGetDownloadURL = null;
+
+async function initFBStorage() {
+  if(_fbStorage) return true;
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getStorage, ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
+    const app = initializeApp(FB_CONFIG);
+    _fbStorage = getStorage(app);
+    _fbRef = ref;
+    _fbUploadBytes = uploadBytes;
+    _fbGetDownloadURL = getDownloadURL;
+    return true;
+  } catch(e) {
+    toast('Firebase SDK failed to load: ' + e.message, 'err');
+    console.error(e);
+    return false;
+  }
+}
+
+async function uploadMP3ToStorage(scriptId, turnIdx, mp3Blob) {
+  if(!_fbStorage) throw new Error('Firebase not initialized');
+  const path = `listening_audio/${scriptId}/turn_${turnIdx}.mp3`;
+  const storageRef = _fbRef(_fbStorage, path);
+  await _fbUploadBytes(storageRef, mp3Blob, { contentType: 'audio/mpeg' });
+  const url = await _fbGetDownloadURL(storageRef);
+  return url;
+}
+
+// Pick voice pair for a script (deterministic so regeneration uses same pair)
+function pickVoicePair(scriptId) {
+  // Hash scriptId → index into EL_VOICE_PAIRS
+  let h = 0;
+  for(let i=0; i<scriptId.length; i++) h = ((h<<5)-h + scriptId.charCodeAt(i)) | 0;
+  return EL_VOICE_PAIRS[Math.abs(h) % EL_VOICE_PAIRS.length];
+}
+
+// Generate audio for ONE turn, upload to Storage, return URL
+async function generateAndUploadTurn(scriptId, turnIdx, text, voiceId) {
+  const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'xi-api-key': EL_API_KEY
+    },
+    body: JSON.stringify({
+      text: text,
+      model_id: EL_MODEL,
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.3,
+        use_speaker_boost: true
+      }
+    })
+  });
+
+  if(!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const msg = err.detail?.message || err.detail || resp.statusText;
+    throw new Error(msg);
+  }
+
+  const mp3Blob = await resp.blob();
+  const url = await uploadMP3ToStorage(scriptId, turnIdx, mp3Blob);
+  return url;
+}
+
+// ═══════════════════════════════════════════════════════════
+// Generate audio for SINGLE script (used by per-script button)
+// ═══════════════════════════════════════════════════════════
+async function generateAudioForScript(scriptId) {
+  // ── IMMEDIATE FEEDBACK ──
+  toast('Starting...', '');
+  console.log(`[Audio Gen] Single script: ${scriptId}`);
+
+  if(!EL_API_KEY) {
+    alert('⚠ API key required.\n\nGo to Settings tab → Paste API key → Save EL Settings.');
+    navTo('settings');
+    return;
+  }
+
+  const t = QB.listening.find(x => x.id === scriptId);
+  if(!t) { alert('Script not found: ' + scriptId); return; }
+
+  const btn = document.querySelector(`[data-gen="${scriptId}"]`);
+  if(btn) { btn.disabled = true; btn.textContent = 'Loading Firebase...'; }
+
+  const ready = await initFBStorage();
+  if(!ready) {
+    if(btn){btn.disabled=false; btn.textContent='Generate';}
+    alert('❌ Firebase Storage failed. Check console (F12).');
+    return;
+  }
+
+  const turns = t.turns || [];
+  const pair = pickVoicePair(scriptId);
+  let successCount = 0;
+
+  for(let i = 0; i < turns.length; i++) {
+    const turn = turns[i];
+    // Skip if already generated (has audioUrl)
+    if(turn.audioUrl) { successCount++; continue; }
+
+    const voiceId = (turn.speakerIndex || 0) === 0 ? pair.A : pair.B;
+
+    if(btn) btn.textContent = `Turn ${i+1}/${turns.length}...`;
+
+    try {
+      const url = await generateAndUploadTurn(scriptId, i, turn.text, voiceId);
+      turn.audioUrl = url;
+      turn.audioVoice = voiceId;
+      delete turn.audioB64; // remove old Base64 if present
+      successCount++;
+    } catch(e) {
+      toast(`Turn ${i+1} failed: ${e.message}`, 'err');
+      console.error('EL error:', e);
+      break;
+    }
+
+    if(i < turns.length - 1) await new Promise(r => setTimeout(r, 300));
+  }
+
+  if(btn) {
+    btn.disabled = false;
+    if(successCount === turns.length) {
+      btn.textContent = '✅ Audio Ready';
+      btn.style.background = 'var(--green)';
+      btn.style.color = '#fff';
+      toast(`${t.title}: ${successCount} turns uploaded ✓`, 'ok');
+    } else {
+      btn.textContent = `⚠ ${successCount}/${turns.length} done`;
+      btn.style.background = 'var(--amber)';
+      btn.style.color = '#fff';
+    }
+  }
+  saveQB();
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BULK: Generate audio for ALL listening scripts
+// ═══════════════════════════════════════════════════════════
+let _bulkCancel = false;
+let _bulkErrorList = [];
+
+// Add error to modal display (latest first)
+function addBulkError(scriptTitle, turnIdx, errorMsg) {
+  // Truncate very long error messages
+  let msg = String(errorMsg || 'Unknown error').slice(0, 200);
+  _bulkErrorList.unshift({
+    title: scriptTitle,
+    turn: turnIdx,
+    msg: msg,
+    time: new Date().toLocaleTimeString()
+  });
+  // Keep only last 8 errors
+  if(_bulkErrorList.length > 8) _bulkErrorList = _bulkErrorList.slice(0, 8);
+
+  const box = document.getElementById('bpErrorBox');
+  const list = document.getElementById('bpErrorList');
+  if(!box || !list) return;
+
+  box.style.display = 'block';
+  list.innerHTML = _bulkErrorList.map(e =>
+    `<div style="padding:5px 0;border-bottom:1px solid #FCA5A5">
+      <div style="font-weight:700">[${e.time}] "${e.title}" turn ${e.turn}</div>
+      <div style="color:#7F1D1D;font-size:10px;margin-top:2px;word-break:break-all">${e.msg}</div>
+    </div>`
+  ).join('');
+}
+
+async function generateAllAudio() {
+  // ── IMMEDIATE FEEDBACK so user knows something is happening ──
+  toast('Starting audio generation...', '');
+  console.log('[Audio Gen] Button clicked, starting...');
+
+  if(!EL_API_KEY) {
+    alert('⚠ ElevenLabs API key is empty.\n\nGo to Settings tab → Paste API key → Save EL Settings, then try again.');
+    navTo('settings');
+    return;
+  }
+
+  // Count total work + skipped
+  const scripts = QB.listening || [];
+  if(!scripts.length) {
+    alert('⚠ No listening scripts found. Load index.html first (Step 1).');
+    return;
+  }
+
+  let totalTurns = 0, needTurns = 0, alreadyDone = 0;
+  scripts.forEach(s => {
+    (s.turns||[]).forEach(t => {
+      totalTurns++;
+      if(t.audioUrl) alreadyDone++;
+      else needTurns++;
+    });
+  });
+
+  console.log(`[Audio Gen] ${scripts.length} scripts, ${totalTurns} total turns, ${alreadyDone} already done, ${needTurns} need generation`);
+
+  if(!needTurns) {
+    alert(`✅ All audio already generated!\n\n${alreadyDone}/${totalTurns} turns have audio.\n\nGo to Step 2: Save & Download index.html.`);
+    return;
+  }
+
+  // Estimate time & cost
+  let totalChars = 0;
+  scripts.forEach(s => (s.turns||[]).forEach(t => { if(!t.audioUrl) totalChars += (t.text||'').length; }));
+  const estSec = Math.round(needTurns * 2.5);
+  const estMin = Math.ceil(estSec / 60);
+
+  const confirmMsg =
+`Generate audio for ${needTurns} turns?
+
+📊 Status:
+  • ${alreadyDone} turns already done (will be SKIPPED)
+  • ${needTurns} turns need generation
+  • ~${totalChars.toLocaleString()} chars (counts toward ElevenLabs quota)
+  • Est. time: ~${estMin} minutes
+  • Voice pairs: 6 (auto-rotate, US/UK mix)
+  • Upload: Firebase Storage
+
+⚠ KEEP THIS TAB OPEN until complete.
+Progress is saved to localStorage every 5 turns.`;
+
+  if(!confirm(confirmMsg)) {
+    console.log('[Audio Gen] User cancelled at confirm dialog');
+    toast('Cancelled', 'warn');
+    return;
+  }
+
+  _bulkCancel = false;
+
+  // Show progress modal IMMEDIATELY (before Firebase init which can take a few seconds)
+  showBulkProgress(needTurns);
+  console.log('[Audio Gen] Progress modal shown');
+
+  // Initialize Firebase Storage
+  const ready = await initFBStorage();
+  if(!ready) {
+    closeBulkProgress();
+    alert('❌ Firebase Storage failed to initialize.\n\nCheck:\n• Internet connection\n• Firebase Storage rules (must allow listening_audio/* writes)\n\nSee browser console (F12) for details.');
+    return;
+  }
+  console.log('[Audio Gen] Firebase Storage ready');
+
+  let done = 0, failed = 0, skipped = alreadyDone;
+  const startTime = Date.now();
+
+  for(let si = 0; si < scripts.length; si++) {
+    if(_bulkCancel) break;
+    const script = scripts[si];
+    const pair = pickVoicePair(script.id);
+    const turns = script.turns || [];
+
+    // Check if this script is fully done
+    const scriptDone = turns.every(t => t.audioUrl);
+    if(scriptDone) {
+      console.log(`[Audio Gen] Script ${si+1}/${scripts.length} "${script.title}" — all turns already done, skipping`);
+      continue;
+    }
+
+    updateBulkProgress({
+      scriptIdx: si, totalScripts: scripts.length,
+      scriptTitle: script.title, pairLabel: pair.label,
+      turnDone: done, turnTotal: needTurns, failed,
+      startTime, skipped
+    });
+
+    for(let ti = 0; ti < turns.length; ti++) {
+      if(_bulkCancel) break;
+      const turn = turns[ti];
+
+      // Skip if already done
+      if(turn.audioUrl) {
+        console.log(`[Audio Gen]   Turn ${ti+1} already has audio, skipping`);
+        continue;
+      }
+
+      const voiceId = (turn.speakerIndex || 0) === 0 ? pair.A : pair.B;
+      console.log(`[Audio Gen] Script ${si+1}/${scripts.length} "${script.title}" Turn ${ti+1}/${turns.length} (${pair.label}, ${voiceId.slice(0,8)}...)`);
+
+      try {
+        const url = await generateAndUploadTurn(script.id, ti, turn.text, voiceId);
+        turn.audioUrl = url;
+        turn.audioVoice = voiceId;
+        delete turn.audioB64;
+        done++;
+        console.log(`[Audio Gen]   ✓ Uploaded → ${url.slice(0,60)}...`);
+      } catch(e) {
+        console.error(`[Audio Gen]   ✗ Script ${script.id} turn ${ti} failed:`, e);
+        failed++;
+
+        // Show error in modal so user can see it on mobile
+        addBulkError(script.title, ti+1, e.message || String(e));
+
+        // Stop on critical errors
+        const errMsg = (e.message||'').toLowerCase();
+        if(errMsg.includes('quota') || errMsg.includes('401') || errMsg.includes('unauthorized') || errMsg.includes('rate')) {
+          alert(`❌ Generation stopped:\n\n${e.message}\n\n${done} turns generated successfully before stopping.\nProgress is saved.`);
+          _bulkCancel = true;
+          break;
+        }
+      }
+
+      updateBulkProgress({
+        scriptIdx: si, totalScripts: scripts.length,
+        scriptTitle: script.title, pairLabel: pair.label,
+        turnDone: done, turnTotal: needTurns, failed,
+        startTime, skipped
+      });
+
+      // Save progress every 5 turns (audio data only, not settings)
+      if(done % 5 === 0 && done > 0) {
+        saveQBAudioOnly();
+      }
+
+      // Rate limit: 300ms between turns
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+
+  saveQBAudioOnly();
+  closeBulkProgress();
+
+  if(_bulkCancel) {
+    alert(`⚠ Generation stopped.\n\n✓ ${done} new audio uploaded\n⊘ ${skipped} already had audio (skipped)\n✗ ${failed} failed\n\nProgress is saved. Click "Generate ALL Audio" again to resume.`);
+  } else {
+    alert(`✅ Audio generation complete!\n\n✓ ${done} new audio uploaded\n⊘ ${skipped} already had audio (skipped)\n✗ ${failed} failed\n\n→ Go to Step 2: Save & Download index.html\n→ Then deploy to Netlify`);
+  }
+
+  // Refresh just the settings page (won't affect audio data already in QB)
+  if(typeof curPage !== 'undefined' && curPage === 'settings') render();
+}
+
+// Save QB to localStorage WITHOUT touching settings inputs (audio gen doesn't change settings)
+function saveQBAudioOnly() {
+  try {
+    const snapshot = JSON.stringify({ qb: QB, ts: Date.now() });
+    if(snapshot.length < 4.5 * 1024 * 1024) {
+      localStorage.setItem('mec_qbank_backup', snapshot);
+      console.log(`[Save] Backup updated: ${(snapshot.length/1024).toFixed(0)}KB`);
+    } else {
+      console.warn(`[Save] Snapshot too large (${(snapshot.length/1024/1024).toFixed(1)}MB), skipping backup`);
+    }
+  } catch(e) {
+    console.warn('saveQB backup skipped:', e.message);
+  }
+}
+
+function showBulkProgress(totalTurns) {
+  const existing = document.getElementById('bulkProgressModal');
+  if(existing) existing.remove();
+  _bulkErrorList = [];
+
+  const modal = document.createElement('div');
+  modal.id = 'bulkProgressModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="font-size:20px;font-weight:800;color:var(--g);margin-bottom:6px">🎤 Generating Audio</div>
+      <div style="font-size:13px;color:#6B7280;margin-bottom:20px">Uploading MP3 files to Firebase Storage</div>
+
+      <div id="bpOverall" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">
+          <span id="bpOverallLabel">Initializing...</span>
+          <span id="bpOverallCount">0 / 0</span>
+        </div>
+        <div style="background:#E5E7EB;border-radius:8px;height:10px;overflow:hidden">
+          <div id="bpOverallBar" style="background:linear-gradient(90deg,#1B4D1E,#2D8B3A);height:100%;width:0%;transition:width .3s"></div>
+        </div>
+      </div>
+
+      <div id="bpDetails" style="background:#F9FAFB;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#4B5563;line-height:1.7">
+        <div><strong>Script:</strong> <span id="bpScript">—</span></div>
+        <div><strong>Voice pair:</strong> <span id="bpPair">—</span></div>
+        <div><strong>Elapsed:</strong> <span id="bpElapsed">00:00</span> · <strong>Est. remaining:</strong> <span id="bpEta">—</span></div>
+        <div><strong>✓ New:</strong> <span id="bpDone" style="color:#059669">0</span> · <strong>⊘ Skipped:</strong> <span id="bpSkipped" style="color:#6B7280">0</span> · <strong>✗ Failed:</strong> <span id="bpFailed" style="color:#DC2626">0</span></div>
+      </div>
+
+      <div id="bpErrorBox" style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#991B1B;line-height:1.5;max-height:140px;overflow-y:auto;display:none">
+        <div style="font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <span>⚠ Recent errors (latest first)</span>
+          <button id="bpClearErr" style="background:#fff;border:1px solid #FCA5A5;border-radius:6px;padding:2px 8px;font-size:10px;color:#991B1B;cursor:pointer;font-family:inherit">Clear</button>
+        </div>
+        <div id="bpErrorList" style="font-family:ui-monospace,monospace;font-size:10.5px"></div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button id="bpCancel" style="flex:1;padding:12px;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit">Cancel</button>
+      </div>
+      <div style="font-size:11px;color:#9CA3AF;margin-top:12px;text-align:center">⚠ Keep this tab open. Do not close the browser.</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('bpCancel').addEventListener('click', () => {
+    if(confirm('Cancel audio generation? Progress is saved.')) {
+      _bulkCancel = true;
+      document.getElementById('bpCancel').textContent = 'Stopping...';
+    }
+  });
+  // Clear errors button
+  const clearBtn = document.getElementById('bpClearErr');
+  if(clearBtn) clearBtn.addEventListener('click', () => {
+    _bulkErrorList = [];
+    document.getElementById('bpErrorBox').style.display = 'none';
+    document.getElementById('bpErrorList').innerHTML = '';
+  });
+}
+
+function updateBulkProgress(state) {
+  const pct = state.turnTotal > 0 ? (state.turnDone / state.turnTotal * 100).toFixed(1) : 0;
+  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  const setW = (id, w) => { const el = document.getElementById(id); if(el) el.style.width = w; };
+
+  setTxt('bpOverallLabel', `Script ${state.scriptIdx+1} / ${state.totalScripts}`);
+  setTxt('bpOverallCount', `${state.turnDone} / ${state.turnTotal} turns`);
+  setW('bpOverallBar', pct + '%');
+  setTxt('bpScript', state.scriptTitle);
+  setTxt('bpPair', state.pairLabel);
+  setTxt('bpDone', state.turnDone);
+  setTxt('bpSkipped', state.skipped || 0);
+  setTxt('bpFailed', state.failed);
+
+  const elapsed = Math.round((Date.now() - state.startTime) / 1000);
+  const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const ss = String(elapsed%60).padStart(2,'0');
+  setTxt('bpElapsed', `${mm}:${ss}`);
+
+  if(state.turnDone > 0) {
+    const perTurn = elapsed / state.turnDone;
+    const remaining = Math.round(perTurn * (state.turnTotal - state.turnDone));
+    const rm = String(Math.floor(remaining/60)).padStart(2,'0');
+    const rs = String(remaining%60).padStart(2,'0');
+    setTxt('bpEta', `${rm}:${rs}`);
+  }
+}
+
+function closeBulkProgress() {
+  const m = document.getElementById('bulkProgressModal');
+  if(m) m.remove();
+}
+
+// Count how many scripts have all audio generated
+function audioGenStats() {
+  const scripts = QB.listening || [];
+  let fullyDone = 0, partial = 0, notStarted = 0, totalTurns = 0, doneTurns = 0;
+  scripts.forEach(s => {
+    const turns = s.turns || [];
+    const haveCount = turns.filter(t => t.audioUrl).length;
+    totalTurns += turns.length;
+    doneTurns += haveCount;
+    if(haveCount === turns.length && turns.length > 0) fullyDone++;
+    else if(haveCount > 0) partial++;
+    else notStarted++;
+  });
+  return { total:scripts.length, fullyDone, partial, notStarted, totalTurns, doneTurns };
+}
+
+async function previewAudioGenStats() {
+  // Helper to refresh stats display without full re-render
+  if(typeof currentPage !== 'undefined' && currentPage === 'settings') {
+    render();
+  }
+}
+
+function clearAudioForScript(scriptId) {
+  const t = QB.listening.find(x => x.id === scriptId);
+  if(!t) return;
+  t.turns.forEach(turn => { delete turn.audioB64; delete turn.audioVoice; });
+  render();
+  toast('Audio cleared', 'warn');
+}
+
+function saveElSettings() {
+  EL_API_KEY = ($('el_api_key')?.value || '').trim();
+  EL_VOICE_A = $('el_voice_a')?.value || '21m00Tcm4TlvDq8ikWAM';
+  EL_VOICE_B = $('el_voice_b')?.value || 'pNInz6obpgDQGcFmaJgB';
+  EL_MODEL   = $('el_model')?.value   || 'eleven_multilingual_v2';
+
+  // Persist across sessions
+  try {
+    localStorage.setItem('mec_el_settings', JSON.stringify({
+      apiKey: EL_API_KEY,
+      voiceA: EL_VOICE_A,
+      voiceB: EL_VOICE_B,
+      model:  EL_MODEL,
+      ts: Date.now()
+    }));
+    toast('ElevenLabs settings saved ✓ (persists across sessions)', 'ok');
+  } catch(e) {
+    console.error('localStorage save failed:', e);
+    toast('Settings saved (localStorage failed: ' + e.message + ')', 'warn');
+  }
+}
+
+function previewVoice(voiceId) {
+  if(!EL_API_KEY) { toast('Enter API key first', 'err'); return; }
+  const text = 'Hello, this is a voice preview for the MEC Academy placement test.';
+  const btn = document.querySelector('[onclick*="previewVoice"]');
+  toast('Loading preview...', '');
+  fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'xi-api-key': EL_API_KEY },
+    body: JSON.stringify({ text, model_id: EL_MODEL, voice_settings: { stability:0.5, similarity_boost:0.75 } })
+  }).then(r => r.blob()).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+    toast('Playing preview...', 'ok');
+  }).catch(e => toast('Preview failed: ' + e.message, 'err'));
+}
+
+// ══════════════════════════════════════════════════════
+// EVENT DELEGATION
+// ══════════════════════════════════════════════════════
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-fn]'); if(!btn) return;
+  const fn=btn.dataset.fn, id=btn.dataset.id;
+  switch(fn){
+    case 'openGV': openGV(id); break;
+    case 'delGV':  delGV(id);  break;
+    case 'openRD': openRD(id); break;
+    case 'delRD':  delRD(id);  break;
+    case 'openLS': openLS(id); break;
+    case 'delLS':  delLS(id);  break;
+    case 'openWR': openWR(id); break;
+    case 'delWR':  delWR(id);  break;
+    case 'openSP': openSP(id); break;
+    case 'delSP':      delSP(id);                    break;
+    case 'genAudio':   generateAudioForScript(id);   break;
+    case 'clearAudio': clearAudioForScript(id);       break;
+  }
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('[data-page]').forEach(el=>{
+    el.addEventListener('click',()=>navTo(el.dataset.page));
+  });
+  navTo('dashboard');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MEC Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#1E4D20;--gm:#2C5F2E;--gl:#3A6B3D;--gp:#EBF4EB;
+  --cu:#A0521F;--cul:#C46A30;--cup:#FDF0E8;
+  --bg:#F0F2F5;--sur:#fff;--bd:#E2E5EA;--bdl:#ECEEF1;
+  --tx:#111827;--txm:#374151;--txl:#6B7280;
+  --green:#16A34A;--red:#DC2626;--amber:#D97706;--blue:#2563EB;
+  --sh:0 1px 3px rgba(0,0,0,.06);--shm:0 4px 14px rgba(0,0,0,.10);
+}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+
+/* AUTH */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:var(--shm)}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:24px;color:var(--g);margin-bottom:6px}
+.auth-logo em{color:var(--cu);font-style:normal}
+.auth-sub{font-size:13px;color:var(--txl);margin-bottom:28px}
+.auth-label{display:block;font-size:12px;font-weight:600;color:var(--txm);margin-bottom:5px;margin-top:14px}
+.auth-input{width:100%;padding:11px 14px;border:1.5px solid var(--bd);border-radius:8px;font-size:15px;font-family:inherit;outline:none;color:var(--tx)}
+.auth-input:focus{border-color:var(--gm)}
+.auth-btn{width:100%;margin-top:20px;padding:13px;background:var(--g);color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.auth-btn:hover{background:var(--gm)}
+.auth-err{font-size:12px;color:var(--red);margin-top:8px;min-height:16px}
+
+/* APP SHELL */
+#appShell{display:none}
+.topbar{background:var(--g);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200}
+.tb-logo{font-family:'DM Serif Display',serif;font-size:17px;color:#fff;display:flex;align-items:center;gap:8px}
+.tb-logo em{color:var(--cul);font-style:normal}
+.tb-dot{width:7px;height:7px;background:var(--cul);border-radius:50%}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-email{font-size:12px;color:rgba(255,255,255,.6)}
+.tb-admin{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700}
+.tb-signout{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
+.layout{display:flex;min-height:calc(100vh - 52px)}
+
+/* SIDEBAR */
+.sidebar{width:180px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);padding:20px 0}
+.nav-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txl);padding:0 16px;margin-bottom:6px;margin-top:16px}
+.nav-section:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;font-weight:500;color:var(--txm);cursor:pointer;border-radius:0;transition:all .12s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg)}
+.nav-item.active{background:var(--gp);color:var(--g);font-weight:700;border-left-color:var(--g)}
+.nav-icon{font-size:15px}
+
+/* MAIN */
+.main-content{flex:1;padding:24px;overflow-y:auto}
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.section-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--tx)}
+
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:var(--sh);border:1px solid var(--bd)}
+.stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txl);margin-bottom:8px}
+.stat-num{font-size:32px;font-weight:700;color:var(--tx);font-family:'DM Serif Display',serif;line-height:1}
+.stat-sub{font-size:11px;color:var(--txl);margin-top:4px}
+.stat-sub.warn{color:var(--amber);font-weight:600}
+.stat-sub.ok{color:var(--green);font-weight:600}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .12s;white-space:nowrap}
+.btn-g{background:var(--g);color:#fff}.btn-g:hover{background:var(--gm)}
+.btn-s{background:#fff;color:var(--txm);border:1.5px solid var(--bd)}.btn-s:hover{background:var(--bg)}
+.btn-xs{padding:5px 10px;font-size:11.5px;border-radius:5px}
+
+/* TABLE */
+.table-card{background:#fff;border-radius:12px;box-shadow:var(--sh);border:1px solid var(--bd);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--bg);border-bottom:1px solid var(--bd)}
+th{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--txl);text-align:left;white-space:nowrap}
+td{padding:12px 14px;font-size:13px;color:var(--txm);border-bottom:1px solid var(--bdl);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFC}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.status-pending{background:#FEF3C7;color:#92400E}
+.status-invited{background:#DBEAFE;color:#1E40AF}
+.status-progress{background:#EDE9FE;color:#5B21B6}
+.status-completed{background:var(--gp);color:var(--g)}
+.actions-cell{display:flex;gap:6px;flex-wrap:wrap}
+
+/* EMPTY */
+.empty{text-align:center;padding:52px 20px;color:var(--txl)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty-title{font-size:17px;font-weight:700;color:var(--txm);margin-bottom:6px}
+.empty-sub{font-size:13px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:740px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shm)}
+.modal-title{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.modal-title-txt{font-family:'DM Serif Display',serif;font-size:18px;color:var(--tx)}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--txl);padding:4px 8px}
+.modal-body{overflow-y:auto;padding:20px;flex:1}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--bd);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+
+/* RESULT MODAL SPECIFICS */
+.result-hero{display:flex;align-items:center;gap:18px;padding:18px 20px;background:linear-gradient(135deg,#1E4D20,#2C5F2E);border-radius:10px;margin-bottom:20px}
+.rh-ring{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rh-cefr{font-family:'DM Serif Display',serif;font-size:28px;color:#fff}
+.rh-name{font-size:18px;font-weight:700;color:#fff}
+.rh-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px}
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.score-box{background:var(--bg);border-radius:9px;padding:12px 14px;border:1px solid var(--bd)}
+.sb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txl);margin-bottom:8px}
+.sb-bar{height:5px;background:var(--bdl);border-radius:3px;overflow:hidden;margin-bottom:7px}
+.sb-fill{height:100%;background:var(--g);border-radius:3px}
+.sb-cefr{font-size:15px;font-weight:700;color:var(--g);font-family:'DM Serif Display',serif}
+.sb-pct{font-size:11px;color:var(--txl)}
+.sb-pending{font-size:12px;font-weight:600;color:var(--amber)}
+.res-section{margin-bottom:16px}
+.res-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txl);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--bdl)}
+.ai-report{background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.ar-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:10px}
+.ar-section{margin-bottom:10px}
+.ar-section-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--txl);margin-bottom:4px}
+.ar-text{font-size:13px;color:var(--txm);line-height:1.65}
+.writing-block{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:10px}
+.wb-task{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--cu);margin-bottom:4px}
+.wb-inst{font-size:12px;color:var(--txl);font-style:italic;margin-bottom:8px;line-height:1.5}
+.wb-resp{font-size:14px;color:var(--tx);line-height:1.75;border-left:3px solid var(--gm);padding-left:12px}
+.priority-item{display:flex;gap:10px;margin-bottom:10px}
+.pi-dot{width:8px;height:8px;border-radius:50%;background:var(--cu);flex-shrink:0;margin-top:5px}
+.pi-area{font-size:13px;font-weight:700;color:var(--tx)}
+.pi-why{font-size:12px;color:var(--txl);margin-top:2px;line-height:1.5}
+.pi-act{font-size:12px;color:var(--gm);margin-top:3px}
+.audio-list{display:flex;flex-direction:column;gap:8px}
+.audio-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--bd);border-radius:8px}
+.audio-lbl{font-size:12px;font-weight:600;color:var(--txm);min-width:70px}
+
+/* FORM */
+.form-row{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--txm);margin-bottom:5px}
+.form-input{width:100%;padding:10px 13px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;outline:none;color:var(--tx)}
+.form-input:focus{border-color:var(--gm)}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;opacity:0;transition:opacity .25s;z-index:9999;pointer-events:none}
+#toast.show{opacity:1}
+#toast.success{background:var(--green)}
+#toast.error{background:var(--red)}
+#toast.info{background:var(--blue)}
+
+/* LOADING OVERLAY */
+#loadingOverlay{position:fixed;inset:0;background:rgba(255,255,255,.75);z-index:5000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#loadingOverlay.show{display:flex}
+.ld-ring{width:40px;height:40px;border:3px solid var(--bdl);border-top-color:var(--g);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-txt{font-size:14px;font-weight:600;color:var(--txm)}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .sidebar{display:none}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .main-content{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">MEC <em>Academy</em></div>
+      <div class="auth-sub">Admin Dashboard &mdash; Sign in to continue</div>
+      <form onsubmit="handleLogin(event)">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" id="loginEmail" type="email" value="grakorea.kim@gmail.com" autocomplete="username">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
+        <div class="auth-err" id="loginErr"></div>
+        <button class="auth-btn" type="submit">Sign In</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+  <div class="topbar">
+    <div class="tb-logo"><span class="tb-dot"></span>MEC <em>&nbsp;Academy</em></div>
+    <div class="tb-right">
+      <span class="tb-admin">ADMIN</span>
+      <span class="tb-email" id="adminEmailDisplay"></span>
+      <button class="tb-signout" onclick="handleSignOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" data-page="students">
+        <span class="nav-icon">&#127891;</span> Students
+      </div>
+      <div class="nav-item" data-page="results">
+        <span class="nav-icon">&#128202;</span> Results
+      </div>
+      <div class="nav-section">System</div>
+      <div class="nav-item" data-page="settings">
+        <span class="nav-icon">&#9881;&#65039;</span> Settings
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <!-- Stats bar -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Students</div>
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-sub">Registered</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending Invite</div>
+          <div class="stat-num" id="statPending">0</div>
+          <div class="stat-sub warn" id="pendingNote">Action needed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">In Progress</div>
+          <div class="stat-num" id="statInProg">0</div>
+          <div class="stat-sub">Invited / testing</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed</div>
+          <div class="stat-num" id="statCompleted">0</div>
+          <div class="stat-sub ok">Results available</div>
+        </div>
+      </div>
+
+      <div id="mainContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="ld-ring"></div>
+  <div class="ld-txt" id="loadingTxt">Loading...</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- RESULT MODAL -->
+<div class="modal-bg" id="resultModal">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-title">
+      <span class="modal-title-txt">&#128202; Test Result</span>
+      <button class="modal-close" onclick="closeModal('resultModal')">&#10005;</button>
+    </div>
+    <div class="modal-body" id="resultBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeModal('resultModal')">Close</button>
+      <button class="btn btn-g" id="dlResultId" data-id="" data-fn="downloadReport">&#128190; Download PDF Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT STUDENT MODAL -->
+<div class="modal-bg" id="studentModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">
+      <span class="modal-title-txt" id="studentModalTitle">Add Student</span>
+      <button class="modal-close" onclick="closeModal('studentModal')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editStudentId">
+      <div class="form-row">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="editName" placeholder="e.g. Kim Minhee">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="editEmail" type="email" placeholder="student@example.com">
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Date of Birth</label>
+          <input class="form-input" id="editDob" placeholder="e.g. 15/03/2005">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Nationality</label>
+          <input class="form-input" id="editNat" placeholder="e.g. Korean">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeModal('studentModal')">Cancel</button>
+      <button class="btn btn-g" onclick="saveStudent()">Save Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVITE MODAL -->
+<div class="modal-bg" id="inviteModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-title">
+      <span class="modal-title-txt">&#9993; Invite <span id="inviteStudentName"></span></span>
+      <button class="modal-close" onclick="closeModal('inviteModal')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">To</label>
+        <div style="font-size:14px;font-weight:600;color:var(--tx)" id="inviteStudentEmail"></div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Email Preview</label>
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:14px 16px;font-size:12.5px;line-height:1.8;color:var(--txm);white-space:pre-wrap;max-height:220px;overflow-y:auto;font-family:Georgia,serif" id="inviteEmailBody"></div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Test Link</label>
+        <div style="background:var(--gp);border:1px solid #C6DFC6;border-radius:6px;padding:8px 12px;font-size:11px;color:var(--g);word-break:break-all;font-family:monospace" id="inviteLinkVal"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeModal('inviteModal')">Cancel</button>
+      <button class="btn btn-s" onclick="copyInviteLink()" style="border-color:var(--g);color:var(--g)">&#128279; Copy Link</button>
+      <button class="btn btn-g" onclick="confirmSendInvite()">&#9989; Mark as Invited</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey:            'AIzaSyB8EBr-fAcGZGcqL1tgMgMzjrHkJz7N73s',
+  authDomain:        'mec-placement.firebaseapp.com',
+  projectId:         'mec-placement',
+  storageBucket:     'mec-placement.firebasestorage.app',
+  messagingSenderId: '610815942283',
+  appId:             '1:610815942283:web:2737a1d461880b4fa1be8e'
+};
+// SITE_URL: 현재 admin.html과 같은 도메인에서 index.html을 찾음
+const SITE_URL = window.location.origin;
+const ADMIN_EMAIL   = 'grakorea.kim@gmail.com';
+const ADMIN_PASS_FB = 'grakorea.kim@gmail.com'; // Firebase Auth email
+
+let fbApp = null, db = null, auth = null, storage = null;
+let currentPage = 'students';
+let students = [];     // array of student docs
+let results  = {};     // cache: studentId -> result doc
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className='toast', 3500);
+}
+
+function showLoading(on, msg='Loading...') {
+  const el = document.getElementById('loadingOverlay');
+  const txt = document.getElementById('loadingTxt');
+  if (el) el.className = on ? 'show' : '';
+  if (txt) txt.textContent = msg;
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+}
+
+function statusBadge(s) {
+  const map = {
+    pending:     ['status-badge status-pending',  'Pending'],
+    invited:     ['status-badge status-invited',  'Invited'],
+    in_progress: ['status-badge status-progress', 'In Progress'],
+    completed:   ['status-badge status-completed','Completed'],
+  };
+  const [cls, lbl] = map[s] || ['status-badge status-pending', s||'Unknown'];
+  return '<span class="'+cls+'">'+lbl+'</span>';
+}
+
+function fmtDate(firestoreTs) {
+  if (!firestoreTs) return '-';
+  const d = firestoreTs.seconds
+    ? new Date(firestoreTs.seconds * 1000)
+    : new Date(firestoreTs);
+  return d.toLocaleDateString('en-GB', {
+    day:'2-digit', month:'short', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+
+function genToken() {
+  return Date.now().toString(36).toUpperCase() + '-' +
+    Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+// ══════════════════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════════════════
+async function initFirebase() {
+  if (fbApp) return true;
+  if (!FB_CONFIG.projectId) return false;
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, where }
+      = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const { getStorage, ref, getDownloadURL, listAll }
+      = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
+    const { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+      = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+
+    fbApp    = initializeApp(FB_CONFIG);
+    db       = getFirestore(fbApp);
+    auth     = getAuth(fbApp);
+    storage  = getStorage(fbApp);
+
+    window._fb = { collection, doc, getDoc, getDocs, setDoc, updateDoc,
+                   query, orderBy, where, ref, getDownloadURL, listAll,
+                   signInWithEmailAndPassword, signOut, onAuthStateChanged };
+    return true;
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+    return false;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+async function handleLogin(e) {
+  if (e) e.preventDefault();
+  const email = document.getElementById('loginEmail')?.value?.trim();
+  const pass  = document.getElementById('loginPass')?.value?.trim();
+  const errEl = document.getElementById('loginErr');
+  if (!email || !pass) { errEl.textContent = 'Please fill in all fields.'; return; }
+
+  const btn = document.querySelector('.auth-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
+  errEl.textContent = '';
+
+  const ok = await initFirebase();
+  if (!ok) {
+    errEl.textContent = 'Firebase connection failed.';
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+    return;
+  }
+
+  try {
+    await window._fb.signInWithEmailAndPassword(auth, email, pass);
+    showApp();
+    await loadStudents();
+    await loadAllResults();
+  } catch(err) {
+    errEl.textContent = err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found'
+      ? 'Invalid email or password.' : 'Sign in failed: ' + err.message;
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+  }
+}
+
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+  document.getElementById('adminEmailDisplay').textContent =
+    auth?.currentUser?.email || ADMIN_EMAIL;
+}
+
+async function handleSignOut() {
+  if (auth) try { await window._fb.signOut(auth); } catch(e) {}
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// DATA LOADING
+// ══════════════════════════════════════════════════════
+async function loadStudents() {
+  showLoading(true, 'Loading students...');
+  if (!db) {
+    students = getSampleStudents();
+    updateStats(); renderPage(); showLoading(false); return;
+  }
+  try {
+    // Load registered students
+    const snap = await window._fb.getDocs(window._fb.collection(db,'students'));
+    const reg = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Also load results collection to catch direct-access students (no token)
+    let directStudents = [];
+    try {
+      const rsnap = await window._fb.getDocs(window._fb.collection(db,'results'));
+      const existingIds = new Set(reg.map(s=>s.id));
+      directStudents = rsnap.docs
+        .filter(d => !existingIds.has(d.id))
+        .map(d => {
+          const r = d.data();
+          return {
+            id: d.id,
+            name: r.studentId?.replace(/^direct_[a-z0-9]+_/,'') || r.name || 'Direct Access',
+            email: '(direct access)',
+            dob: '',
+            nationality: '',
+            status: 'completed',
+            level: r.adminReport?.finalCEFR || r.level || '',
+            gmScore: r.gmScore,
+            rdScore: r.rdScore,
+            lstScore: r.lstScore,
+            completedAt: r.updatedAt || r.createdAt,
+            createdAt: r.createdAt,
+            selfTest: true
+          };
+        });
+    } catch(e) { console.warn('Results load error:', e); }
+
+    students = [...reg, ...directStudents];
+    students.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    updateStats();
+    renderPage();
+  } catch(e) {
+    console.error('loadStudents error:', e);
+    toast('Failed to load students: ' + e.message, 'error');
+    students = [];
+    renderPage();
+  }
+  showLoading(false);
+}
+
+// Load ALL results for students who have completed or are in_progress
+async function loadAllResults() {
+  if (!db) return;
+  showLoading(true, 'Loading results...');
+  try {
+    // Scan entire results collection — catches direct-access and pending students
+    const allSnap = await window._fb.getDocs(window._fb.collection(db,'results'));
+    const existingIds = new Set(students.map(s=>s.id));
+
+    allSnap.docs.forEach(d => {
+      results[d.id] = d.data();
+      const r = d.data();
+      const st = students.find(s => s.id === d.id);
+      if (st) {
+        // Update cached status for registered students who completed
+        if (st.status !== 'completed') {
+          st.status = 'completed';
+          st.level  = r.adminReport?.finalCEFR || r.level || st.level;
+          st.gmScore = r.gmScore; st.rdScore = r.rdScore; st.lstScore = r.lstScore;
+          st.completedAt = r.updatedAt || r.createdAt;
+        }
+      } else {
+        // Add direct-access students not in students collection
+        students.push({
+          id: d.id,
+          name: (r.studentId||'').replace(/^direct_[a-z0-9]+_/,'') || r.name || 'Direct Access',
+          email: '(direct)', dob: '', nationality: '',
+          status: 'completed',
+          level: r.adminReport?.finalCEFR || r.level || '',
+          gmScore: r.gmScore, rdScore: r.rdScore, lstScore: r.lstScore,
+          completedAt: r.updatedAt || r.createdAt, createdAt: r.createdAt,
+          selfTest: true
+        });
+      }
+    });
+  } catch(e) {
+    console.error('loadAllResults error:', e);
+    // Fallback: load only for known students
+    try {
+      const needResult = students.filter(s => s.status==='completed'||s.status==='in_progress');
+      await Promise.all(needResult.map(async s => {
+        if (results[s.id]) return;
+        try {
+          const snap = await window._fb.getDoc(window._fb.doc(db,'results',s.id));
+          if (snap.exists()) results[s.id] = snap.data();
+        } catch(e2) {}
+      }));
+    } catch(e2) { console.error('Fallback loadAllResults error:', e2); }
+  }
+  updateStats();
+  renderPage();
+  showLoading(false);
+}
+
+async function loadResult(studentId) {
+  if (results[studentId]) return results[studentId];
+  if (!db) return null;
+  try {
+    const snap = await window._fb.getDoc(
+      window._fb.doc(db, 'results', studentId)
+    );
+    if (snap.exists()) {
+      results[studentId] = snap.data();
+      return results[studentId];
+    }
+  } catch(e) { console.warn('loadResult error:', e); }
+  return null;
+}
+
+// Load audio URLs from Firebase Storage
+async function loadAudioUrls(studentId) {
+  if (!storage) return [];
+  try {
+    const listRef = window._fb.ref(storage, 'audio/' + studentId);
+    const listRes = await window._fb.listAll(listRef);
+    const urls = await Promise.all(
+      listRes.items.map(item => window._fb.getDownloadURL(item))
+    );
+    return urls;
+  } catch(e) {
+    console.warn('Audio load error:', e);
+    return [];
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+function navTo(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item[data-page]').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === page)
+  );
+  if (page === 'results') {
+    // Always reload results when switching to Results tab
+    loadAllResults().then(() => renderPage());
+  } else {
+    renderPage();
+  }
+}
+
+function renderPage() {
+  const main = document.getElementById('mainContent');
+  if (!main) return;
+  switch(currentPage) {
+    case 'students': renderStudents(main); break;
+    case 'results':  renderResults(main);  break;
+    case 'settings': renderSettings(main); break;
+  }
+}
+
+function updateStats() {
+  const total     = students.length;
+  const pending   = students.filter(s => s.status === 'pending').length;
+  const inProg    = students.filter(s => s.status === 'invited' || s.status === 'in_progress').length;
+  const completed = students.filter(s => s.status === 'completed').length;
+  // selfTest count for info
+  const selfTests = students.filter(s => s.selfTest).length;
+  const el = id => document.getElementById(id);
+  if (el('statTotal'))     el('statTotal').textContent    = total;
+  if (el('statPending'))   el('statPending').textContent  = pending;
+  if (el('statInProg'))    el('statInProg').textContent   = inProg;
+  if (el('statCompleted')) el('statCompleted').textContent = completed;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: STUDENTS
+// ══════════════════════════════════════════════════════
+function renderStudents(main) {
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const list = q
+    ? students.filter(s =>
+        (s.name||'').toLowerCase().includes(q) ||
+        (s.email||'').toLowerCase().includes(q) ||
+        (s.nationality||'').toLowerCase().includes(q))
+    : students;
+
+  main.innerHTML =
+    '<div class="section-hd">'
+    +'  <div class="section-title">&#127891; Students</div>'
+    +'  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    +'    <input class="form-input" id="searchInput" placeholder="Search name / email..." style="max-width:220px;padding:8px 12px" id="searchInput" onkeyup="renderPage()">'
+    +'    <button class="btn btn-g" onclick="openAddStudent()">+ Add Student</button>'+
+    '    <button class="btn btn-s" onclick="importStudentsExcel()">&#8679; Import Excel</button>'+
+    '    <button class="btn btn-s" onclick="exportStudentsExcel()">&#11015; Export Excel</button>'
+    +'    <button class="btn btn-s" onclick="loadStudents()">&#8635; Refresh</button>'
+    +'  </div>'
+    +'</div>'
+
+    + (list.length === 0
+      ? '<div class="empty"><div class="empty-icon">&#127891;</div>'
+        +'<div class="empty-title">No students yet</div>'
+        +'<div class="empty-sub">Add students and send them test invites.</div></div>'
+      : '<div class="table-card"><div style="overflow-x:auto"><table>'
+        +'<thead><tr>'
+        +'<th>Student</th><th>Email</th><th>Nationality</th>'
+        +'<th>Status</th><th>Registered</th><th>Actions</th>'
+        +'</tr></thead><tbody>'
+        + list.map(s => {
+          const date = fmtDate(s.createdAt);
+          return '<tr>'
+            +'<td><strong>'+esc(s.name||'-')+'</strong><br>'
+            +'<span style="font-size:11px;color:var(--txl)">'+esc(s.dob||'')+'</span></td>'
+            +'<td style="font-size:12px">'+esc(s.email||'-')+'</td>'
+            +'<td>'+esc(s.nationality||'-')+'</td>'
+            +'<td>'+statusBadge(s.status)+'</td>'
+            +'<td style="font-size:12px">'+date+'</td>'
+            +'<td><div class="actions-cell">'
+            +(s.status==='pending'||s.status==='invited'
+              ?'<button class="btn btn-xs btn-g" data-fn="sendInvite" data-id="'+s.id+'">&#9993; Invite</button>'
+              :'<button class="btn btn-xs btn-s" data-fn="copyLink" data-id="'+s.id+'">&#128279; Link</button>')
+            +(s.status==='completed'?'<button class="btn btn-xs btn-g" data-fn="viewResult" data-id="'+s.id+'">&#128202; Result</button>':'')
+            +(s.selfTest?'':('<button class="btn btn-xs btn-s" data-fn="editStudent" data-id="'+s.id+'">&#9998; Edit</button>'))
+            +'<button class="btn btn-xs" data-fn="deleteStudent" data-id="'+s.id+'" style="background:#FEF2F2;color:#CC2200;border:1px solid #FECACA;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>'
+            +'</div></td>'
+            +'</tr>';
+        }).join('')
+        +'</tbody></table></div></div>'
+    );
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: RESULTS ← MAIN FIX
+// ══════════════════════════════════════════════════════
+function renderResults(main) {
+  // Show ALL students who have attempted the test (in_progress OR completed)
+  const attempted = students.filter(s =>
+    s.status === 'completed' || s.status === 'in_progress'
+  );
+
+  main.innerHTML =
+    '<div class="section-hd">'
+    +'<div class="section-title">&#128202; Test Results</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn btn-s" onclick="loadAllResults().then(renderPage)">&#8635; Refresh</button>'+
+    '<button class="btn btn-s" onclick="exportStudentsExcel()">&#11015; Export Excel</button>'+
+    '<button class="btn btn-g btn-sm" onclick="showRubricEditor()">&#9997; Rubric Settings</button>'+
+    '</div>'
+    +'</div>'
+
+    + (attempted.length === 0
+      ? '<div class="empty"><div class="empty-icon">&#128202;</div>'
+        +'<div class="empty-title">No results yet</div>'
+        +'<div class="empty-sub">Results appear here after students start or complete the test.</div></div>'
+
+      : '<div class="table-card"><div style="overflow-x:auto"><table>'
+        +'<thead><tr>'
+        +'<th>Student</th><th>Status</th><th>Level</th>'
+        +'<th>Grammar</th><th>Reading</th><th>Listening</th>'
+        +'<th>Writing</th><th>Speaking</th>'
+        +'<th>Date</th><th>Actions</th>'
+        +'</tr></thead><tbody>'
+        + attempted.map(s => {
+          const r = results[s.id];
+          const date = fmtDate(s.completedAt || s.updatedAt || s.createdAt);
+          const level = r ? r.level || (r.adminReport?.finalCEFR) || '-' : (s.level||s.gmScore?s.level||'-':'-');
+          const gm  = r ? (r.gmScore  != null ? r.gmScore+'%' : '-') : (s.gmScore!=null?s.gmScore+'%':'-');
+          const rd  = r ? (r.rdScore  != null ? r.rdScore+'%' : '-') : (s.rdScore!=null?s.rdScore+'%':'-');
+          const ls  = r ? (r.lstScore != null ? r.lstScore+'%' : '-') : (s.lstScore!=null?s.lstScore+'%':'-');
+          const wrCount = r ? (r.writingResponses||[]).filter(w=>w.text?.trim()).length : 0;
+          const spCount = r ? (r.speakingCount||0) : 0;
+          return '<tr>'
+            +'<td><strong>'+esc(s.name||'-')+'</strong>'
+            +(s.selfTest?'<span style="font-size:9px;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:700">Direct</span>':'')
+            +'<br><span style="font-size:11px;color:var(--txl)">'+esc(s.nationality||'')+'</span></td>'
+            +'<td>'+statusBadge(s.status)+'</td>'
+            +'<td style="font-family:DM Serif Display,serif;font-size:17px;font-weight:700;color:var(--g)">'+esc(level)+'</td>'
+            +'<td>'+gm+'</td><td>'+rd+'</td><td>'+ls+'</td>'
+            +'<td>'+(wrCount>0?'<span style="color:var(--green)">&#10003; '+wrCount+' task'+(wrCount>1?'s':'')+'</span>':'<span style="color:var(--txl)">Pending</span>')+'</td>'
+            +'<td>'+(spCount>0?'<span style="color:var(--green)">&#9654; '+spCount+' rec</span>':'<span style="color:var(--txl)">Pending</span>')+'</td>'
+            +'<td style="font-size:12px">'+date+'</td>'
+            +'<td><div class="actions-cell">'
+            +'<button class="btn btn-xs btn-g" data-fn="viewResult" data-id="'+s.id+'">&#128202; View</button>'
+            +(r?'<button class="btn btn-xs btn-s" data-fn="downloadReport" data-id="'+s.id+'">&#128190; PDF</button>':'')
+            +(s.status==='completed'&&r?'<button class="btn btn-xs" data-fn="regenReport" data-id="'+s.id+'" title="Regenerate AI Report" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#129302; AI</button>':'')
+            +'<button class="btn btn-xs" data-fn="deleteStudent" data-id="'+s.id+'" style="background:#FEF2F2;color:#CC2200;border:1px solid #FECACA;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>'
+            +'</div></td>'
+            +'</tr>';
+        }).join('')
+        +'</tbody></table></div></div>'
+    );
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: SETTINGS
+// ══════════════════════════════════════════════════════
+function getStoredApiKey() {
+  try { return localStorage.getItem('mec_api_key') || ''; } catch(e) { return ''; }
+}
+function saveApiKey() {
+  const key = (document.getElementById('apiKeyInput')?.value||'').trim();
+  if(!key || !key.startsWith('sk-ant')) {
+    toast('Please enter a valid Anthropic API key (starts with sk-ant-)', 'error'); return;
+  }
+  try { localStorage.setItem('mec_api_key', key); } catch(e) {}
+  toast('API key saved ✓ — AI reports will now be generated', 'success');
+  renderPage();
+}
+async function regenerateAllReports() {
+  const key = getStoredApiKey();
+  if(!key) { toast('Please save your Anthropic API key first (Settings tab)', 'error'); return; }
+  const targets = students.filter(s => s.status === 'completed');
+  if(!targets.length) { toast('No completed tests found', 'error'); return; }
+  if(!confirm('Regenerate AI reports for '+targets.length+' student(s)?\nThis calls the Claude API once per student.')) return;
+  let done=0, failed=0;
+  showLoading(true, 'Generating AI reports (0/'+targets.length+')...');
+  for(const s of targets) {
+    try {
+      let r = results[s.id] || await loadResult(s.id);
+      if(!r) { failed++; continue; }
+      const lv = r.level || 'A2';
+      const wrTexts = (r.writingResponses||[]).map((w,i)=>'Task '+(i+1)+' ('+( w.task||'Writing')+', '+(w.wordCount||0)+' words):\n'+(w.text||'')).join('\n\n');
+      const SYSTEM = 'You are a senior EFL/ESL placement specialist. CRITICAL RULES: (1) NEVER assign a CEFR band if the student scored <50% at that level. <30% = drop 2 levels, 30-49% = drop 1 level, >=50% = confirm. (2) finalCEFR must be defensible to parents. (3) writingDiagnostic rubric scores 1-5 based on actual writing quality - quote specific phrases. (4) finalComments: 8-10 sentences covering placement rationale, strongest/weakest sections with specific evidence, receptive vs productive balance, 2-3 personalised learning recommendations, motivational close. Return ONLY valid JSON with keys: finalCEFR, levelName, confidenceNote, profileSummary, skillLevels(grammar/vocabulary/reading/listening/writing/speaking), grammarDiagnostic(cefrBand,percentage,cefrDescriptor,evidenceSummary,strengths[],developmentAreas[],adaptivePath), readingDiagnostic(same structure), listeningDiagnostic(same structure), writingDiagnostic(overallBand,overallPercentage,summaryComment,rubric[taskAchievement/coherenceCohesion/lexicalResource/grammaticalRangeAccuracy each score:1-5/band/comment with evidence],taskAnnotations[{taskNum,overallTaskComment,errorHighlights[{phrase,errorType,correction,comment}],positiveHighlights[{phrase,comment}]}]), speakingDiagnostic(overallBand,pending,summaryComment), skillBalance(strongest,weakest,balanceComment), studyPriorities(3: area/rationale/suggestedActivity/timeframe), finalComments(8-10 detailed sentences), teacherNotes, strongAreas(3: area/evidence), weakAreas(3: area/evidence/suggestion), recommendedCourse, recommendedLevel. All text in professional English.';
+      const prompt = 'CANDIDATE: '+(s.name||'Unknown')+' | DOB: '+(s.dob||'n/a')+' | Nationality: '+(s.nationality||'n/a')+'\nSCORES: Grammar '+(r.gmScore||0)+'% | Reading '+(r.rdScore||0)+'% | Listening '+(r.lstScore||0)+'%\nFINAL LEVEL: '+lv+'\nWRITING:\n'+(wrTexts||'(none submitted)')+'\n\nReturn ONLY valid JSON.';
+      const resp = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:SYSTEM,messages:[{role:'user',content:prompt}]})});
+      const data = await resp.json();
+      if(data.error) throw new Error(data.error.message||'API error');
+      const txt = (data.content&&data.content[0]&&data.content[0].text)||'{}';
+      const ar = JSON.parse(txt.replace(/```json\n?|```\n?/g,'').trim());
+      if(db){
+        const {doc,updateDoc}=await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        await updateDoc(window._fb.doc(db,'results',s.id),{adminReport:ar,level:ar.finalCEFR||lv,skillLevels:ar.skillLevels||{},updatedAt:{seconds:Date.now()/1000}});
+        results[s.id]={...r,adminReport:ar};
+      }
+      done++;
+      showLoading(true,'Generating AI reports ('+done+'/'+targets.length+')...');
+    } catch(err) { console.error('Regen failed:',s.name,err); failed++; }
+  }
+  showLoading(false);
+  toast('Done: '+done+' reports generated'+(failed?' · '+failed+' failed':''), done>0?'success':'error');
+  renderPage();
+}
+
+function renderSettings(main) {
+  main.innerHTML =
+    '<div class="section-hd"><div class="section-title">&#9881;&#65039; Settings</div></div>'
+    +'<div style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:20px;margin-bottom:14px">'
+    +'<div style="font-size:15px;font-weight:700;margin-bottom:4px">Firebase Project</div>'
+    +'<div style="font-size:13px;color:var(--txl)">Project: <strong>'+FB_CONFIG.projectId+'</strong></div>'
+    +'<div style="font-size:13px;color:var(--txl);margin-top:4px">Test site: <a href="'+SITE_URL+'" target="_blank" style="color:var(--blue)">'+SITE_URL+'</a></div>'
+    +'</div>'
+    +'<div style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:20px">'
+    +'<div style="font-size:15px;font-weight:700;margin-bottom:14px">Import / Export</div>'
+    +'<button class="btn btn-s" onclick="exportStudentsCSV()">&#11015; Export Students CSV</button>'
+    +'</div>';
+
+  // ── API Key card ────────────────────────────────────────────
+  main.innerHTML +=
+    '<div style="background:#fff;border-radius:12px;border:2px solid #C9A84C;padding:20px;margin-top:14px">'
+    +'<div style="font-size:15px;font-weight:700;color:#A0521F;margin-bottom:4px">&#128273; AI Report API Key</div>'
+    +'<div style="font-size:12.5px;color:var(--txl);margin-bottom:12px">Required to generate full AI diagnostic reports. Without this, reports show basic scores only.</div>'
+    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'
+      +'<input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." '
+        +'style="flex:1;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;font-size:12px;font-family:monospace" '
+        +'value="'+(getStoredApiKey()||'')+'">'
+      +'<button onclick="saveApiKey()" style="padding:10px 18px;background:var(--g);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit">Save</button>'
+    +'</div>'
+    +(getStoredApiKey()?'<div style="font-size:11px;color:#16803C;font-weight:600;margin-bottom:8px">&#10003; API key saved</div>':'<div style="font-size:11px;color:#B45309;margin-bottom:8px">&#9888; No API key — AI reports unavailable</div>')
+    +'<div style="font-size:11px;color:var(--txl);margin-bottom:12px">Stored in this browser only. Get yours at: <a href="https://console.anthropic.com" target="_blank" style="color:var(--blue)">console.anthropic.com</a></div>'
+    +'<button onclick="regenerateAllReports()" style="width:100%;padding:11px 16px;background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">'
+      +'&#9889; Regenerate AI Reports for Completed Students'
+    +'</button>'
+    +'</div>';}
+
+// ══════════════════════════════════════════════════════
+// VIEW RESULT MODAL
+// ══════════════════════════════════════════════════════
+async function viewResult(studentId) {
+  showLoading(true, 'Loading results...');
+  const s = students.find(x => x.id === studentId);
+  let r = await loadResult(studentId);
+  showLoading(false);
+  if (!r) {
+    toast('Loading from Firebase...', 'info');
+    try {
+      if(db) {
+        const snap = await window._fb.getDoc(window._fb.doc(db,'results',studentId));
+        if(snap.exists()) { results[studentId]=snap.data(); r=results[studentId]; }
+      }
+    } catch(e) { console.warn(e); }
+    if(!r) { toast('No result data found.','error'); return; }
+  }
+  const ar = r.adminReport || {};
+  const sk = r.skillLevels || {};
+  const gd  = ar.grammarDiagnostic   || {};
+  const rdD = ar.readingDiagnostic   || {};
+  const lsD = ar.listeningDiagnostic || {};
+  const wrd = ar.writingDiagnostic   || {};
+  const lvChip = lv => `<span style="background:#EBF4EB;color:var(--g);font-weight:700;font-size:14px;padding:2px 10px;border-radius:4px">${esc(lv||'-')}</span>`;
+  const bar = (lv,pct) => {
+    const ord=['Pre-A1','A1','A2','B1','B2','C1']; const n=ord.indexOf(lv);
+    const p=pct!=null?pct:n>=0?Math.round((n+1)/ord.length*100):0;
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <div style="flex:1;height:5px;background:var(--bdl);border-radius:3px;overflow:hidden">
+        <div style="width:${Math.min(100,p)}%;height:100%;background:linear-gradient(90deg,var(--g),#C9A84C)"></div>
+      </div><span style="font-size:11px;font-weight:700;color:var(--g);width:34px">${esc(lv||'-')}</span>
+      ${pct!=null?`<span style="font-size:11px;color:var(--txl);width:32px">${pct}%</span>`:''}
+    </div>`;
+  };
+  const secDiag = (icon,lbl,d,pct) => !d?.cefrBand ? '' :
+    `<div style="background:var(--bg);border-radius:9px;padding:12px 14px;margin-bottom:9px;border:1px solid var(--bdl)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="font-size:13px">${icon} ${lbl}</b>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${pct!=null?`<span style="font-size:12px;color:var(--txl)">${pct}%</span>`:''}${lvChip(d.cefrBand)}
+        </div>
+      </div>
+      ${d.cefrDescriptor?`<div style="font-size:11.5px;color:var(--g);background:var(--gp);border-radius:5px;padding:6px 9px;margin-bottom:7px;font-style:italic">${esc(d.cefrDescriptor)}</div>`:''}
+      ${d.evidenceSummary?`<p style="font-size:12px;color:var(--txm);font-style:italic;margin-bottom:6px">${esc(d.evidenceSummary)}</p>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11.5px">
+        ${(d.strengths||[]).length?`<div><b style="color:var(--green)">✓ Strengths:</b><br>${(d.strengths||[]).map(x=>`• ${esc(typeof x==='string'?x:x.area||x)}`).join('<br>')}</div>`:''}
+        ${(d.developmentAreas||[]).length?`<div><b style="color:var(--amber)">△ Develop:</b><br>${(d.developmentAreas||[]).map(x=>`• ${esc(typeof x==='string'?x:x.area||x)}`).join('<br>')}</div>`:''}
+      </div>
+      ${d.adaptivePath?`<div style="font-size:10px;color:var(--txl);margin-top:6px">Path: ${esc(d.adaptivePath)}</div>`:''}
+    </div>`;
+  document.getElementById('resultBody').innerHTML =
+    `<div class="result-hero"><div class="rh-ring"><span class="rh-cefr">${esc(ar.finalCEFR||r.level||'-')}</span></div>
+      <div><div class="rh-name">${esc(s?.name||'Student')}</div>
+      <div class="rh-sub">${esc(ar.levelName||'')} ${ar.recommendedCourse?'&bull; '+esc(ar.recommendedCourse):''}</div>
+      <div class="rh-sub" style="margin-top:3px">${esc(s?.dob||'')} ${s?.nationality?'&bull; '+esc(s.nationality):''}</div>
+    </div></div>`
+    +(ar.profileSummary&&ar.profileSummary!=='Manual review required.'?`<div style="background:var(--gp);border-left:3px solid var(--g);border-radius:0 8px 8px 0;padding:10px 13px;margin-bottom:12px;font-style:italic;font-size:13px;color:var(--txm)">${esc(ar.profileSummary)}</div>`:'')
+    +`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txl);margin-bottom:7px">SKILL PROFILE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      ${[['Grammar',sk.grammar,r.gmScore],['Reading',sk.reading,r.rdScore],['Listening',sk.listening,r.lstScore],['Writing',sk.writing,null],['Speaking',sk.speaking,null]]
+        .map(([n,lv,pct])=>`<div style="background:var(--bg);border-radius:8px;padding:9px 11px;border:1px solid var(--bdl)">
+          <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--txl);margin-bottom:5px">${n}</div>
+          ${bar(lv,pct)}${pct==null?'<div style="font-size:10px;color:var(--amber)">Pending</div>':''}
+        </div>`).join('')}</div>`
+    +(gd.cefrBand||rdD.cefrBand||lsD.cefrBand?
+      `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txl);margin-bottom:7px">SECTION DIAGNOSTICS</div>`
+      +secDiag('📝','Grammar & Vocab',gd,r.gmScore)+secDiag('📖','Reading',rdD,r.rdScore)+secDiag('🎧','Listening',lsD,r.lstScore):'')
+    +((wrd.rubric||ar.writingRubric)&&Object.keys(wrd.rubric||ar.writingRubric||{}).length>1?
+      `<div class="ai-report"><div class="ar-title">✍️ Writing Rubric</div>
+        ${['taskAchievement','coherenceCohesion','lexicalResource','grammaticalRangeAccuracy']
+          .map(k=>{const c=(wrd.rubric||ar.writingRubric||{})[k];return c?
+            `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdl)">
+              <span style="font-size:12px;font-weight:600">${k.replace(/([A-Z])/g,' $1').trim()}</span>
+              <span><span style="background:var(--gp);color:var(--g);font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-right:5px">${esc(c.band||'')}</span><b>${c.score||0}/5</b></span>
+            </div>`:''}
+          ).join('')}</div>`:'')
+    +((r.writingResponses||[]).length?
+      `<div class="ai-report"><div class="ar-title">✍️ Writing Assessment</div>
+        ${(r.writingResponses||[]).map((w,i)=>{
+          const ann = ((wrd.taskAnnotations||[])[i]) || {};
+          const wc  = w.wordCount||(w.text||'').split(/\s+/).filter(Boolean).length||0;
+          const goods = (ann.positiveHighlights||[]);
+          const errs  = (ann.errorHighlights||[]);
+          return `<div class="writing-block">
+            <div class="wb-task">Task ${i+1}: ${esc(w.task||w.taskType||'')}</div>
+            <div class="wb-inst">${esc(w.instruction||'')}</div>
+            <div style="font-size:11px;color:var(--txl);margin-bottom:8px">✎ ${wc} words submitted</div>
+            ${w.text?`<div style="font-size:13px;font-family:Georgia,serif;color:#1a202c;background:#F9FAFB;border-left:3px solid var(--g);padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;line-height:1.8;white-space:pre-wrap">${esc(w.text)}</div>`:''}
+            ${ann.overallTaskComment?`<div style="font-size:12.5px;color:var(--txm);font-style:italic;padding:7px 10px;background:var(--bg);border-radius:6px;margin-bottom:6px">${esc(ann.overallTaskComment)}</div>`:''}
+            ${goods.length?`<div style="font-size:11.5px;margin-bottom:4px"><b style="color:var(--green)">✓ Strengths:</b> ${goods.map(g=>`"${esc(g.phrase||'')}" — ${esc(g.comment||'')}`).join(' • ')}</div>`:''}
+            ${errs.length?`<div style="font-size:11.5px"><b style="color:var(--amber)">△ Improvements:</b> ${errs.map(e=>`${esc(e.errorType||'')}: "${esc(e.phrase||'')}" → ${esc(e.correction||'')}`).join(' • ')}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>`:'') +(r.speakingCount>0?`<div class="ai-report" style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:10px"><div class="ar-title" style="color:#0369A1">&#127897; Speaking Recording (${r.speakingCount} task${r.speakingCount>1?'s':''})</div><div id="audioList_${studentId}" style="margin-top:4px"><div style="font-size:12px;color:var(--txl)">Loading audio...</div></div></div>`:'')
+    +(ar.teacherNotes&&ar.teacherNotes!=='AI analysis unavailable.'?
+      `<div class="ai-report" style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px">
+        <div class="ar-title" style="color:var(--amber)">🔒 Teacher Notes (Confidential)</div>
+        <div class="ar-text">${esc(ar.teacherNotes)}</div>
+      </div>`:'')
+    +(!ar.grammarDiagnostic?.cefrBand?
+      `<div class="ai-report" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px">
+        <div class="ar-title" style="color:#92400E">⚡ AI Analysis Incomplete</div>
+        <div class="ar-text" style="color:#78350F">Full AI report not generated. Click the <b>🤖 AI</b> button next to this student in the Results table to regenerate, or go to <b>Settings → Regenerate AI Reports</b>.</div>
+      </div>`:'');
+  document.getElementById('dlResultId').dataset.id = studentId;
+  document.getElementById('resultModal').classList.add('open');
+  // Auto-load speaking audio after modal opens
+  if (r.speakingCount > 0) {
+    setTimeout(() => loadAndShowAudio(studentId), 300);
+  }
+}
+
+async function loadAndShowAudio(studentId) {
+  const container = document.getElementById('audioList_'+studentId);
+  if (!container) return;
+  container.innerHTML = '<div style="font-size:12px;color:var(--txl);margin-top:8px">Loading audio...</div>';
+  const urls = await loadAudioUrls(studentId);
+  if (!urls.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--amber)">No audio files found in Storage.</div>';
+    return;
+  }
+  container.innerHTML = '<div class="audio-list" style="margin-top:10px">'
+    + urls.map((url,i) =>
+        '<div class="audio-item">'
+        +'<span class="audio-lbl">Task '+(i+1)+'</span>'
+        +'<audio controls src="'+url+'" style="flex:1;height:32px"></audio>'
+        +'<a href="'+url+'" download="speaking_task_'+(i+1)+'.webm" class="btn btn-xs btn-s">&#11015;</a>'
+        +'</div>'
+      ).join('')
+    +'</div>';
+}
+
+const LV_NAMES = {
+  'Pre-A1':'Beginner','A1':'Elementary','A2':'Pre-Intermediate',
+  'B1':'Intermediate','B2':'Upper-Intermediate','C1':'Advanced'
+};
+
+// ══════════════════════════════════════════════════════
+// DOWNLOAD PDF REPORT
+// ══════════════════════════════════════════════════════
+
+async function downloadReport(studentId) {
+  const s = students.find(x => x.id === studentId);
+  const r = results[studentId] || await loadResult(studentId);
+  if (!r) { toast('No result data to generate report', 'error'); return; }
+
+  const ar = r.adminReport || {};
+  const sk = r.skillLevels || {};
+  const gd = ar.grammarDiagnostic   || {};
+  const rdD= ar.readingDiagnostic   || {};
+  const lsD= ar.listeningDiagnostic || {};
+  const wrd= ar.writingDiagnostic   || {};
+  const spd= ar.speakingDiagnostic  || {};
+  const bal= ar.skillBalance        || {};
+  const now= new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'});
+
+  const lvBar = lv => {
+    const order=['Pre-A1','A1','A2','B1','B2','C1'];
+    const n = order.indexOf(lv);
+    const pct = n>=0 ? Math.round((n+1)/order.length*100) : 50;
+    return `<div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1;height:8px;background:#E5E7EB;border-radius:4px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#1E4D20,#C9A84C);border-radius:4px"></div>
+      </div>
+      <span style="font-size:13px;font-weight:800;color:#1E4D20;width:36px">${esc(lv||'-')}</span>
+    </div>`;
+  };
+
+  const rubricDots = n => Array(5).fill(0).map((_,i)=>
+    `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${i<(n||0)?'#1E4D20':'#D1D5DB'};margin-right:3px"></span>`
+  ).join('');
+
+  const sectionBlock = (icon, title, band, pct, cefrDesc, evidenceSummary, strengths, devAreas, path) => `
+    <div class="sec-block">
+      <div class="sec-hd">
+        <div>
+          <div class="sec-icon-title">${icon} ${title}</div>
+          ${path?`<div class="sec-path">Adaptive path: ${esc(path)}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div class="sec-band">${esc(band||'-')}</div>
+          ${pct?`<div class="sec-pct">${pct}%</div>`:''}
+        </div>
+      </div>
+      ${cefrDesc?`<div class="cefr-box"><span class="cefr-tag">CEFR</span>${esc(cefrDesc)}</div>`:''}
+      ${evidenceSummary?`<p class="evidence-text">${esc(evidenceSummary)}</p>`:''}
+      <div class="str-dev-grid">
+        ${(strengths||[]).length?`<div>
+          <div class="sd-label str">✓ Strengths</div>
+          ${(strengths||[]).map(s=>`<div class="sd-item">${esc(typeof s==='string'?s:s.area||s)}</div>`).join('')}
+        </div>`:''}
+        ${(devAreas||[]).length?`<div>
+          <div class="sd-label dev">△ Development Areas</div>
+          ${(devAreas||[]).map(d=>`<div class="sd-item">${esc(typeof d==='string'?d:d.area||d)}</div>`).join('')}
+        </div>`:''}
+      </div>
+    </div>`;
+
+  const rubricTable = (rubric, title) => {
+    if(!rubric||Object.keys(rubric).length<2) return '';
+    const rows = [
+      ['Task Achievement / Response', rubric.taskAchievement],
+      ['Coherence & Cohesion',        rubric.coherenceCohesion],
+      ['Lexical Resource',            rubric.lexicalResource],
+      ['Grammatical Range & Accuracy',rubric.grammaticalRangeAccuracy],
+    ].filter(([,v])=>v);
+    if(!rows.length) return '';
+    return `<table class="rubric-tbl">
+      <caption>${title}</caption>
+      <thead><tr><th>Criterion</th><th style="width:80px;text-align:center">Score</th><th style="width:60px;text-align:center">Band</th><th>Examiner Comment</th></tr></thead>
+      <tbody>${rows.map(([name,c],i)=>`
+        <tr style="background:${i%2?'#F9FAFB':'#fff'}">
+          <td class="rub-name">${name}</td>
+          <td style="text-align:center;padding:8px">${rubricDots(c.score)}<br><b style="font-size:12px">${c.score||0}/5</b></td>
+          <td style="text-align:center;padding:8px"><span class="band-chip">${esc(c.band||'-')}</span></td>
+          <td class="rub-comment">${esc(c.comment||'')}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  };
+
+  const annotatedWriting = (text, annotations, taskNum) => {
+    // Show evaluation/comments only — NOT the raw student text
+    const errs  = (annotations?.errorHighlights    || []);
+    const goods = (annotations?.positiveHighlights  || []);
+    const taskComment = annotations?.overallTaskComment || '';
+    if(!errs.length && !goods.length && !taskComment) {
+      // No AI evaluation yet: show word count only
+      const wc = text ? text.trim().split(/\s+/).filter(Boolean).length : 0;
+      return `<div class="wr-eval-pending">
+        <div style="font-size:12px;color:#6B7280;font-style:italic">&#9998; ${wc} words submitted — awaiting teacher evaluation</div>
+      </div>`;
+    }
+    let evalHTML = taskComment ? `<div class="wr-eval-comment">${esc(taskComment)}</div>` : '';
+    if(goods.length) {
+      evalHTML += `<div class="wr-eval-section str"><div class="wr-eval-lbl">✓ Strengths</div>
+        ${goods.map(g=>`<div class="wr-eval-item ok">&ldquo;${esc(g.phrase||'')}&rdquo; — ${esc(g.comment||'')}</div>`).join('')}
+      </div>`;
+    }
+    if(errs.length) {
+      evalHTML += `<div class="wr-eval-section dev"><div class="wr-eval-lbl">△ Areas for Improvement</div>
+        ${errs.map(e=>`<div class="wr-eval-item err"><b>${esc(e.errorType||'Error')}:</b> &ldquo;${esc(e.phrase||'')}&rdquo; → ${esc(e.correction||'')}. ${esc(e.comment||'')}</div>`).join('')}
+      </div>`;
+    }
+    return `<div class="wr-eval-wrap">${evalHTML}</div>`;
+  };
+
+  // ── Writing tasks ──────────────────────────────────────────────
+  const writingTasks = (r.writingResponses||[]).map((w,i)=>{
+    const ann = ((wrd.taskAnnotations||[])[i]) || {};
+    const wc  = w.wordCount || (w.text||'').split(/\s+/).filter(Boolean).length || 0;
+    return `
+      <div class="task-block">
+        <div class="task-hd">Task ${i+1}: ${esc(w.task||w.taskType||'Writing Task')}</div>
+        <div class="task-inst">${esc(w.instruction||'')}</div>
+        <div class="task-stats">
+          <span>&#9998; ${wc} words submitted</span>
+          ${ann.overallTaskComment?`<span class="task-verdict">${esc(ann.overallTaskComment)}</span>`:''}
+        </div>
+        ${annotatedWriting(w.text||w.response||'', ann, i+1)}
+      </div>`;
+  }).join('');
+
+  // ── Study priorities ───────────────────────────────────────────
+  const priorities = (ar.studyPriorities||[]).map((p,i)=>`
+    <tr>
+      <td class="pri-num">${i+1}</td>
+      <td class="pri-area">${esc(p.area||String(p))}</td>
+      <td class="pri-rat">${esc(p.rationale||p.reason||'')}</td>
+      <td class="pri-act">${esc(p.suggestedActivity||p.activity||'')}</td>
+      <td class="pri-time">${esc(p.timeframe||'')}</td>
+    </tr>`).join('');
+
+  // ── Final comments (numbered paragraphs) ──────────────────────
+  const finalLines = (ar.finalComments||'').split(/\n+/).filter(l=>l.trim());
+  const finalHTML = finalLines.map(l=>`<p>${esc(l)}</p>`).join('');
+
+  // ── Skill overview bars ────────────────────────────────────────
+  const skillBars = [
+    ['Grammar & Vocab', sk.grammar, r.gmScore],
+    ['Reading',         sk.reading, r.rdScore],
+    ['Listening',       sk.listening, r.lstScore],
+    ['Writing',         sk.writing, null],
+    ['Speaking',        sk.speaking, null],
+  ].map(([name,lv,pct])=>`
+    <div class="skill-row">
+      <div class="skill-name">${name}</div>
+      <div class="skill-bar-wrap">${lvBar(lv)}</div>
+      ${pct!=null?`<div class="skill-pct">${pct}%</div>`:'<div class="skill-pct" style="color:#9CA3AF">–</div>'}
+    </div>`).join('');
+
+  // ══════════════════════════════════════════════════════════════
+  // HTML DOCUMENT
+  // ══════════════════════════════════════════════════════════════
+  const reportHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MEC Placement Report — ${esc(s?.name||'Student')}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;background:#fff;font-size:13px;line-height:1.7}
+.page{max-width:820px;margin:0 auto;padding:40px 48px}
+h2{font-family:'Playfair Display',serif;font-size:17px;color:#1E4D20;border-bottom:2.5px solid #DCF0DC;padding-bottom:7px;margin:28px 0 14px;letter-spacing:-.01em}
+h3{font-family:'Playfair Display',serif;font-size:15px;color:#374151;margin:16px 0 8px}
+p{margin-bottom:9px;color:#374151}
+
+/* HEADER */
+.rpt-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1E4D20;padding-bottom:18px;margin-bottom:24px}
+.rpt-logo-name{font-family:'Playfair Display',serif;font-size:24px;color:#1E4D20;font-weight:700}
+.rpt-logo-name em{color:#A0521F;font-style:italic}
+.rpt-logo-sub{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6B7280;margin-top:2px}
+.rpt-date-info{text-align:right;font-size:11px;color:#6B7280;line-height:1.8}
+
+/* HERO BAND */
+.hero{background:linear-gradient(135deg,#112614 0%,#1E4D20 55%,#2C5F2E 100%);border-radius:14px;padding:26px 30px;margin-bottom:22px;display:flex;gap:0}
+.hero-result{flex:0 0 180px;border-right:1px solid rgba(255,255,255,.15);padding-right:28px;margin-right:28px}
+.hero-result-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);margin-bottom:6px}
+.hero-cefr{font-family:'Playfair Display',serif;font-size:60px;color:#fff;line-height:1;font-weight:700}
+.hero-level{font-size:14px;color:rgba(255,255,255,.8);margin-top:4px;font-weight:600}
+.hero-conf{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;font-style:italic}
+.hero-skills{flex:1}
+.hero-skills-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);margin-bottom:10px}
+.skill-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.skill-name{font-size:11px;color:rgba(255,255,255,.8);width:110px;flex-shrink:0}
+.skill-bar-wrap{flex:1}
+.skill-pct{font-size:11px;color:rgba(255,255,255,.7);width:35px;text-align:right}
+.hero-candidate{flex:0 0 160px;border-left:1px solid rgba(255,255,255,.15);padding-left:24px;margin-left:4px}
+.hero-cand-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.45);margin-bottom:8px}
+.hero-cand-name{font-family:'Playfair Display',serif;font-size:17px;color:#fff;margin-bottom:4px}
+.hero-cand-info{font-size:11px;color:rgba(255,255,255,.6);line-height:1.8}
+.hero-course{font-size:10px;color:rgba(255,255,255,.5);margin-top:6px;border-top:1px solid rgba(255,255,255,.12);padding-top:6px}
+
+/* PROFILE */
+.profile-box{background:#F0F7F0;border-left:4px solid #1E4D20;border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:8px;font-size:13.5px;color:#1a202c;line-height:1.8;font-style:italic}
+
+/* SECTIONS */
+.sec-block{background:#FAFAFA;border:1px solid #E5E7EB;border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.sec-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.sec-icon-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#111827}
+.sec-path{font-size:10px;color:#9CA3AF;margin-top:3px;font-family:'Plus Jakarta Sans',sans-serif}
+.sec-band{font-family:'Playfair Display',serif;font-size:28px;color:#1E4D20;font-weight:700;line-height:1}
+.sec-pct{font-size:12px;color:#6B7280;text-align:right}
+.cefr-box{background:#EFF8EF;border:1px solid #BBF7BB;border-radius:7px;padding:9px 12px;margin-bottom:10px;font-size:12px;color:#14532D;line-height:1.6}
+.cefr-tag{background:#1E4D20;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:8px;letter-spacing:.06em;text-transform:uppercase}
+.evidence-text{font-size:13px;color:#374151;margin-bottom:10px;line-height:1.7;font-style:italic}
+.str-dev-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sd-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.sd-label.str{color:#16803C}
+.sd-label.dev{color:#B45309}
+.sd-item{font-size:12px;color:#374151;padding:3px 0;border-bottom:1px solid #F3F4F6}
+
+/* RUBRIC TABLE */
+.rubric-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px}
+.rubric-tbl caption{font-family:'Playfair Display',serif;font-size:14px;color:#1E4D20;text-align:left;padding-bottom:8px;font-weight:700}
+.rubric-tbl thead tr{background:#1E4D20;color:#fff}
+.rubric-tbl th{padding:9px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.rub-name{padding:9px 11px;font-weight:600;color:#1a202c;border-bottom:1px solid #E5E7EB;font-size:12.5px}
+.rub-comment{padding:9px 11px;color:#4B5563;line-height:1.55;border-bottom:1px solid #E5E7EB}
+.band-chip{background:#EFF8EF;color:#1E4D20;font-size:11px;font-weight:700;padding:3px 9px;border-radius:4px}
+
+/* WRITING */
+.task-block{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.task-hd{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#A0521F;margin-bottom:4px}
+.task-inst{font-size:12px;color:#6B7280;font-style:italic;margin-bottom:10px;line-height:1.6}
+.wr-body{font-size:13.5px;font-family:Georgia,serif;color:#1a202c;line-height:1.9;border-left:3px solid #1E4D20;padding-left:14px;margin-bottom:8px}
+
+/* Writing evaluation (no raw text) */
+.wr-eval-wrap{padding:8px 0}
+.wr-eval-comment{font-size:13px;color:#374151;font-style:italic;margin-bottom:10px;padding:8px 12px;background:#F9FAFB;border-radius:6px;line-height:1.7}
+.wr-eval-section{margin-bottom:10px}
+.wr-eval-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.wr-eval-section.str .wr-eval-lbl{color:#16803C}
+.wr-eval-section.dev .wr-eval-lbl{color:#B45309}
+.wr-eval-item{font-size:12px;padding:5px 8px;border-radius:5px;margin-bottom:4px;line-height:1.6}
+.wr-eval-item.ok{background:#F0FDF4;color:#14532D}
+.wr-eval-item.err{background:#FEF2F2;color:#7F1D1D}
+.wr-eval-pending{padding:10px 0}
+.task-stats{display:flex;justify-content:space-between;font-size:11px;color:#9CA3AF;margin-top:6px}
+.task-verdict{color:#1E4D20;font-weight:600;font-style:italic}
+.err-hl{background:#FEF2F2;color:#991B1B;border-bottom:2px solid #EF4444;cursor:help}
+.ok-hl{background:#F0FDF4;color:#14532D;border-bottom:2px dashed #22C55E;cursor:help}
+.annotation-legend{margin-top:10px;padding:10px 12px;background:#F9FAFB;border-radius:8px;font-size:11.5px}
+.ann-item{padding:3px 0;line-height:1.7}
+.ann-item.err{color:#7F1D1D}
+.ann-item.ok{color:#14532D}
+
+/* PRIORITIES */
+.pri-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.pri-table thead tr{background:#F3F4F6}
+.pri-table th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6B7280;border-bottom:1px solid #E5E7EB}
+.pri-table td{padding:9px 10px;border-bottom:1px solid #F3F4F6;vertical-align:top}
+.pri-num{font-family:'Playfair Display',serif;font-size:18px;color:#1E4D20;font-weight:700;width:30px;text-align:center}
+.pri-area{font-weight:700;color:#111827;width:120px}
+.pri-rat{color:#374151}
+.pri-act{color:#374151;font-style:italic}
+.pri-time{color:#6B7280;white-space:nowrap;font-size:11px}
+
+/* FINAL COMMENT */
+.final-box{background:#FFF8F2;border:1px solid #FDDCBB;border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.final-box p{font-size:13.5px;font-family:Georgia,serif;color:#1a202c;margin-bottom:10px}
+.teacher-box{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px}
+.teacher-box p{font-size:12.5px;color:#374151}
+
+/* FOOTER */
+.rpt-footer{margin-top:36px;padding-top:16px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:flex-end}
+.footer-info{font-size:10px;color:#9CA3AF;line-height:1.8}
+.sig-line{width:160px;border-top:1px solid #374151;padding-top:5px;font-size:10px;text-align:center;color:#374151}
+
+.no-print{margin-top:28px;text-align:center}
+@media print{
+  body{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .no-print{display:none}
+  .page{padding:20px 28px}
+  .sec-block{break-inside:avoid}
+  .task-block{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="rpt-header">
+  <div>
+    <div class="rpt-logo-name">MEC <em>Language</em> Academy</div>
+    <div class="rpt-logo-sub">English Language Placement Report</div>
+  </div>
+  <div class="rpt-date-info">
+    <div>Report Date: <b>${now}</b></div>
+    <div>EduCity, Iskandar Puteri, Johor Bahru</div>
+    <div style="margin-top:3px;font-size:10px">Confidential — For Academic Use Only</div>
+  </div>
+</div>
+
+<!-- HERO RESULT BAND -->
+<div class="hero">
+  <div class="hero-result">
+    <div class="hero-result-label">Placement Result</div>
+    <div class="hero-cefr">${esc(ar.finalCEFR||r.level||'-')}</div>
+    <div class="hero-level">${esc(ar.levelName||'')}</div>
+    <div class="hero-conf">${esc(ar.confidenceNote||'')}</div>
+  </div>
+  <div class="hero-skills">
+    <div class="hero-skills-title">Skill Profile</div>
+    ${skillBars}
+  </div>
+  <div class="hero-candidate">
+    <div class="hero-cand-label">Candidate</div>
+    <div class="hero-cand-name">${esc(s?.name||'')}</div>
+    <div class="hero-cand-info">
+      ${s?.dob?`DOB: ${esc(s.dob)}<br>`:''}
+      ${s?.nationality?`${esc(s.nationality)}<br>`:''}
+      Test date: ${esc(r.createdAt?.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString('en-GB'):'n/a')}
+    </div>
+    <div class="hero-course">${esc(ar.recommendedCourse||ar.recommendedLevel||'')}</div>
+  </div>
+</div>
+
+<!-- OVERALL PROFILE -->
+<h2>Overall Profile</h2>
+<div class="profile-box">${esc(ar.profileSummary||'')}</div>
+
+<!-- SECTION 1: GRAMMAR & VOCABULARY -->
+<h2>Section Analysis</h2>
+${sectionBlock('📝', 'Grammar &amp; Vocabulary',
+  gd.cefrBand||sk.grammar||r.level,
+  gd.percentage!=null?gd.percentage:r.gmScore,
+  gd.cefrDescriptor,
+  gd.evidenceSummary,
+  gd.strengths, gd.developmentAreas,
+  gd.adaptivePath)}
+
+<!-- SECTION 2: READING -->
+${sectionBlock('📖', 'Reading',
+  rdD.cefrBand||sk.reading||r.level,
+  rdD.percentage!=null?rdD.percentage:r.rdScore,
+  rdD.cefrDescriptor,
+  rdD.evidenceSummary,
+  rdD.strengths, rdD.developmentAreas,
+  rdD.adaptivePath)}
+
+<!-- SECTION 3: LISTENING -->
+${sectionBlock('🎧', 'Listening',
+  lsD.cefrBand||sk.listening||r.level,
+  lsD.percentage!=null?lsD.percentage:r.lstScore,
+  lsD.cefrDescriptor,
+  lsD.evidenceSummary,
+  lsD.strengths, lsD.developmentAreas,
+  lsD.adaptivePath)}
+
+<!-- SECTION 4: WRITING -->
+<h2>Writing Assessment</h2>
+${wrd.summaryComment?`<p style="font-style:italic;color:#374151;margin-bottom:12px">${esc(wrd.summaryComment)}</p>`:''}
+${rubricTable(wrd.rubric||ar.writingRubric, 'Writing Rubric — Examiner Assessment')}
+${writingTasks}
+
+<!-- SECTION 5: SPEAKING -->
+<h2>Speaking Assessment</h2>
+${spd.pending||!spd.overallBand
+  ?`<div class="sec-block" style="background:#FFFBEB;border-color:#FDE68A">
+    <p style="color:#92400E;margin:0"><b>⚠ Speaking assessment pending teacher review.</b> The speaking component will be assessed by the class teacher during the first lesson oral interview. The preliminary recording has been reviewed; see rubric notes below.</p>
+  </div>`
+  :`<div class="sec-block">
+    <div class="sec-hd">
+      <div><div class="sec-icon-title">🎙 Speaking</div></div>
+      <div class="sec-band">${esc(spd.overallBand||'-')}</div>
+    </div>
+    ${spd.summaryComment?`<p class="evidence-text">${esc(spd.summaryComment)}</p>`:''}
+  </div>`}
+${rubricTable(spd.rubric||ar.speakingRubric, 'Speaking Rubric')}
+
+<!-- STRENGTHS & AREAS FOR IMPROVEMENT -->
+<h2>Strengths &amp; Areas for Improvement</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+  <div>
+    <h3 style="color:#16A34A;border-bottom-color:#BBF7D0">Demonstrated Strengths</h3>
+    ${(ar.strongAreas||[]).map(a=>`<div style="padding:6px 0;border-bottom:1px solid #F3F4F6">
+      <div style="font-size:12.5px;font-weight:600;color:#111827">${esc(typeof a==='string'?a:a.area||'')}</div>
+      ${typeof a!=='string'&&a.evidence?`<div style="font-size:11.5px;color:#6B7280;margin-top:2px">${esc(a.evidence)}</div>`:''}
+    </div>`).join('') || '<p style="color:#9CA3AF;font-size:12px">To be completed after review.</p>'}
+  </div>
+  <div>
+    <h3 style="color:#D97706;border-bottom-color:#FDE68A">Areas for Development</h3>
+    ${(ar.weakAreas||[]).map(a=>`<div style="padding:6px 0;border-bottom:1px solid #F3F4F6">
+      <div style="font-size:12.5px;font-weight:600;color:#111827">${esc(typeof a==='string'?a:a.area||'')}</div>
+      ${typeof a!=='string'&&a.evidence?`<div style="font-size:11.5px;color:#6B7280;margin-top:2px">${esc(a.evidence)}</div>`:''}
+      ${typeof a!=='string'&&a.suggestion?`<div style="font-size:11px;color:#B45309;margin-top:2px">→ ${esc(a.suggestion)}</div>`:''}
+    </div>`).join('') || '<p style="color:#9CA3AF;font-size:12px">To be completed after review.</p>'}
+  </div>
+</div>
+
+<!-- STUDY PRIORITIES -->
+${priorities?`<h2>Recommended Study Priorities</h2>
+<table class="pri-table">
+  <thead><tr><th>#</th><th>Area</th><th>Rationale</th><th>Suggested Activity</th><th>Timeframe</th></tr></thead>
+  <tbody>${priorities}</tbody>
+</table>`:''}
+
+<!-- FINAL ASSESSMENT -->
+<h2>Final Assessment &amp; Recommendations</h2>
+${bal.balanceComment?`<p style="font-style:italic;color:#374151;margin-bottom:10px">${esc(bal.balanceComment)}</p>`:''}
+<div class="final-box">
+  ${finalHTML||`<p style="color:#9CA3AF">Final comments will be generated by AI analysis.</p>`}
+</div>
+
+<!-- TEACHER NOTES -->
+<h2>Notes for the Teacher <span style="font-size:11px;font-weight:400;color:#9CA3AF">(Confidential)</span></h2>
+<div class="teacher-box">
+  ${ar.teacherNotes?`<p>${esc(ar.teacherNotes)}</p>`:'<p style="color:#9CA3AF">Teacher notes pending.</p>'}
+</div>
+
+<!-- FOOTER -->
+<div class="rpt-footer">
+  <div class="footer-info">
+    <div>MEC Language Academy — English Language Placement Test</div>
+    <div>EduCity, Iskandar Puteri, Johor Bahru, Malaysia</div>
+    <div>Generated by MEC Placement System · ${now}</div>
+  </div>
+  <div style="text-align:right">
+    <div class="sig-line">Class Teacher's Signature</div>
+  </div>
+</div>
+
+<div class="no-print">
+  <button onclick="window.print()" style="background:#1E4D20;color:#fff;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em">
+    💾 Save as PDF / Print
+  </button>
+</div>
+
+</div>
+</body>
+</html>`;
+
+  // Open in new window and auto-print for PDF saving
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) {
+    // Popup blocked — fallback to download
+    const blob = new Blob([reportHtml], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'MEC_Report_' + (s?.name||'Student').replace(/\s+/g,'_') + '_' + (ar.finalCEFR||r.level||'B1') + '.html';
+    a.click();
+    toast('Report downloaded. Open the file and click "Save as PDF"', 'info');
+    return;
+  }
+  win.document.open();
+  win.document.write(reportHtml);
+  win.document.close();
+  // Auto-open print dialog after fonts load
+  win.addEventListener('load', function() {
+    setTimeout(() => win.print(), 800);
+  });
+  toast('Report opened — Print → Save as PDF ✓', 'success');
+}
+
+
+function openAddStudent() {
+  document.getElementById('studentModalTitle').textContent = 'Add Student';
+  document.getElementById('editStudentId').value = '';
+  document.getElementById('editName').value = '';
+  document.getElementById('editEmail').value = '';
+  document.getElementById('editDob').value = '';
+  document.getElementById('editNat').value = '';
+  document.getElementById('studentModal').classList.add('open');
+}
+
+function editStudent(id) {
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('studentModalTitle').textContent = 'Edit Student';
+  document.getElementById('editStudentId').value = id;
+  document.getElementById('editName').value  = s.name||'';
+  document.getElementById('editEmail').value = s.email||'';
+  document.getElementById('editDob').value   = s.dob||'';
+  document.getElementById('editNat').value   = s.nationality||'';
+  document.getElementById('studentModal').classList.add('open');
+}
+
+async function deleteStudent(id) {
+  const s = students.find(x => x.id === id);
+  if(!s) return;
+  const name = s.name || id;
+  if(!confirm(`Delete student "${name}"?\n\nThis cannot be undone.`)) return;
+
+  showLoading(true, 'Deleting...');
+  if(db){
+    try{
+      // Delete from students collection
+      const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+      await deleteDoc(doc(db,'students',id)).catch(()=>{});
+      // Also delete result if exists
+      await deleteDoc(doc(db,'results',id)).catch(()=>{});
+      toast(`${name} deleted`, 'success');
+    }catch(e){
+      console.warn('Delete error:',e);
+      toast('Delete failed: '+e.message, 'error');
+    }
+  }
+  // Remove from local cache
+  students = students.filter(x => x.id !== id);
+  delete results[id];
+  updateStats();
+  renderPage();
+  showLoading(false);
+}
+
+async function saveStudent() {
+  const id    = document.getElementById('editStudentId').value;
+  const name  = document.getElementById('editName').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  const dob   = document.getElementById('editDob').value.trim();
+  const nat   = document.getElementById('editNat').value.trim();
+  if (!name) { toast('Name is required', 'error'); return; }
+
+  const token = id || genToken();
+  const data = {
+    name, email: email||'', dob: dob||'', nationality: nat||'',
+    token, status: id ? (students.find(x=>x.id===id)?.status||'pending') : 'pending',
+    createdAt: id ? undefined : {seconds: Date.now()/1000}
+  };
+  Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);
+
+  if (db) {
+    try {
+      await window._fb.setDoc(window._fb.doc(db,'students',token), data, {merge:true});
+      toast('Student saved', 'success');
+    } catch(e) {
+      toast('Save failed: '+e.message, 'error'); return;
+    }
+  }
+  closeModal('studentModal');
+  await loadStudents();
+}
+
+// ══════════════════════════════════════════════════════
+// INVITE
+// ══════════════════════════════════════════════════════
+function sendInvite(id) {
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  // 링크: 현재 admin.html의 origin + index.html 경로
+  const basePath = window.location.pathname.replace(/admin\.html.*$/, '');
+  const link = window.location.origin + basePath + 'index.html'
+    + '?token=' + s.id
+    + '&name=' + encodeURIComponent(s.name||'')
+    + '&dob='  + encodeURIComponent(s.dob||'')
+    + '&nat='  + encodeURIComponent(s.nationality||'');
+
+  const emailBody = `Dear ${s.name||'Student'},
+
+You are invited to take the MEC Academy English Placement Test.
+
+Please click the link below to begin:
+${link}
+
+This link is personalised for you and can only be used once.
+The test takes approximately 30–40 minutes.
+
+Best regards,
+MEC Language Academy
+EduCity, Iskandar Puteri, Johor Bahru`;
+
+  document.getElementById('inviteStudentName').textContent = s.name||'';
+  document.getElementById('inviteStudentEmail').textContent = s.email||'(no email)';
+  document.getElementById('inviteEmailBody').textContent = emailBody;
+  document.getElementById('inviteLinkVal').textContent = link;
+  document.getElementById('inviteModal').classList.add('open');
+  document.getElementById('inviteModal').dataset.studentId = id;
+}
+
+function copyLink(id) {
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  // 링크: 현재 admin.html의 origin + index.html 경로
+  const basePath = window.location.pathname.replace(/admin\.html.*$/, '');
+  const link = window.location.origin + basePath + 'index.html'
+    + '?token=' + s.id
+    + '&name=' + encodeURIComponent(s.name||'')
+    + '&dob='  + encodeURIComponent(s.dob||'')
+    + '&nat='  + encodeURIComponent(s.nationality||'');
+  navigator.clipboard.writeText(link).then(() => toast('Link copied!', 'success'));
+}
+
+function copyInviteLink() {
+  const link = document.getElementById('inviteLinkVal').textContent;
+  navigator.clipboard.writeText(link).then(() => toast('Link copied!', 'success'));
+}
+
+async function confirmSendInvite() {
+  const id = document.getElementById('inviteModal').dataset.studentId;
+  toast('Link copied to clipboard. Paste it in your email app.', 'info');
+  copyInviteLink();
+  // Update status to invited
+  if (db && id) {
+    try {
+      await window._fb.updateDoc(window._fb.doc(db,'students',id), {status:'invited'});
+      const s = students.find(x => x.id === id);
+      if (s) s.status = 'invited';
+      updateStats();
+    } catch(e) { console.warn('Status update failed:', e); }
+  }
+  closeModal('inviteModal');
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════
+
+
+// ══════════════════════════════════════════════════════
+// EXCEL EXPORT — Students & Results
+// ══════════════════════════════════════════════════════
+
+
+// ══════════════════════════════════════════════════════
+// EXCEL IMPORT / EXPORT (완전 재작성)
+// ══════════════════════════════════════════════════════
+
+function exportStudentsExcel() {
+  if(typeof XLSX === 'undefined'){ toast('SheetJS not loaded — refresh the page', 'error'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // ── Sheet 1: Students ──
+  const sRows = [['Name','Email','Date of Birth','Nationality','Status','ID / Token','Registered']];
+  students.forEach(s => sRows.push([
+    s.name||'', s.email||'', s.dob||'', s.nationality||'',
+    s.status||'', s.id||'', fmtDate(s.createdAt)
+  ]));
+  const ws1 = XLSX.utils.aoa_to_sheet(sRows);
+  ws1['!cols'] = [{wch:20},{wch:26},{wch:14},{wch:14},{wch:12},{wch:28},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Students');
+
+  // ── Sheet 2: Results ──
+  const rRows = [['Name','Nationality','DOB','Level','Grammar %','Reading %','Listening %',
+    'Writing Tasks','Speaking Recs','Completed','Course','Direct?']];
+  students
+    .filter(s => s.status==='completed' || s.gmScore!=null)
+    .forEach(s => {
+      const r = results[s.id] || {};
+      const ar = r.adminReport || {};
+      rRows.push([
+        s.name||'', s.nationality||'', s.dob||'',
+        ar.finalCEFR || r.level || s.level || '',
+        r.gmScore!=null?r.gmScore:(s.gmScore!=null?s.gmScore:''),
+        r.rdScore!=null?r.rdScore:(s.rdScore!=null?s.rdScore:''),
+        r.lstScore!=null?r.lstScore:(s.lstScore!=null?s.lstScore:''),
+        (r.writingResponses||[]).filter(w=>w.text?.trim()).length || '',
+        r.speakingCount || '',
+        fmtDate(s.completedAt),
+        ar.recommendedCourse || '',
+        s.selfTest ? 'Yes' : 'No'
+      ]);
+    });
+  const ws2 = XLSX.utils.aoa_to_sheet(rRows);
+  ws2['!cols'] = [{wch:20},{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:12},
+                  {wch:12},{wch:12},{wch:22},{wch:28},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Results');
+
+  XLSX.writeFile(wb, 'MEC_Students_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  toast('Excel exported ✓', 'success');
+}
+
+function importStudentsExcel() {
+  if(typeof XLSX === 'undefined'){ toast('SheetJS not loaded — refresh the page', 'error'); return; }
+
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.xlsx,.xls,.csv';
+  inp.onchange = async e => {
+    const file = e.target.files[0]; if(!file) return;
+    showLoading(true, 'Importing...');
+
+    try {
+      const buf = await file.arrayBuffer();
+      const wb  = XLSX.read(buf, { type:'array' });
+
+      // Accept any first sheet, or one named Students/students
+      const wsName = wb.SheetNames.find(n => /students?/i.test(n)) || wb.SheetNames[0];
+      const ws = wb.Sheets[wsName];
+      if(!ws){ toast('No sheet found in file', 'error'); showLoading(false); return; }
+
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      if(rows.length < 2){ toast('File is empty', 'error'); showLoading(false); return; }
+
+      // Auto-detect header row — find Name column
+      const header = rows[0].map(c => String(c).toLowerCase().trim());
+      const nameCol  = header.findIndex(h => h.includes('name'));
+      const emailCol = header.findIndex(h => h.includes('email') || h.includes('mail'));
+      const dobCol   = header.findIndex(h => h.includes('dob') || h.includes('birth') || h.includes('date'));
+      const natCol   = header.findIndex(h => h.includes('nat') || h.includes('country'));
+
+      if(nameCol < 0){ toast('Cannot find "Name" column in file', 'error'); showLoading(false); return; }
+
+      let added = 0, skipped = 0, errors = 0;
+      const existingNames = new Set(students.map(s => (s.name||'').toLowerCase()));
+
+      for(let i = 1; i < rows.length; i++){
+        const row = rows[i];
+        const name = String(row[nameCol]||'').trim();
+        if(!name){ skipped++; continue; }
+        if(existingNames.has(name.toLowerCase())){ skipped++; continue; }
+
+        const email = emailCol>=0 ? String(row[emailCol]||'').trim() : '';
+        const dob   = dobCol>=0   ? String(row[dobCol]  ||'').trim() : '';
+        const nat   = natCol>=0   ? String(row[natCol]  ||'').trim() : '';
+
+        const token = genToken();
+        const data  = { name, email, dob, nationality:nat, token,
+                        status:'pending', createdAt:{seconds:Date.now()/1000} };
+
+        if(db){
+          try{
+            await window._fb.setDoc(window._fb.doc(db,'students',token), data);
+            existingNames.add(name.toLowerCase());
+            added++;
+          }catch(err){ console.warn('Row',i,'failed:',err.message); errors++; }
+        } else {
+          students.push({id:token,...data}); added++;
+          existingNames.add(name.toLowerCase());
+        }
+      }
+
+      showLoading(false);
+      toast(`Import done: ${added} added, ${skipped} skipped, ${errors} errors`, added>0?'success':'error');
+      if(added>0) await loadStudents();
+
+    } catch(err) {
+      console.error('Import error:', err);
+      toast('Import failed: ' + err.message, 'error');
+      showLoading(false);
+    }
+  };
+  inp.click();
+}
+
+
+// ══════════════════════════════════════════════════════
+// RUBRIC MODAL: Writing & Speaking scoring
+// ══════════════════════════════════════════════════════
+const DEFAULT_RUBRIC = {
+  writing: {
+    taskAchievement: {
+      name:'Task Achievement / Response',
+      desc:'Does the student address all parts of the task? Is the content relevant and accurate?',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Fully addresses task; detailed, accurate, well-developed response'},
+        {score:4,label:'Good',desc:'Addresses task; mostly complete, minor omissions'},
+        {score:3,label:'Adequate',desc:'Addresses main parts; some irrelevance or underdevelopment'},
+        {score:2,label:'Limited',desc:'Partially addresses task; limited detail, frequent irrelevance'},
+        {score:1,label:'Very Limited',desc:'Barely addresses task; very little relevant content'},
+        {score:0,label:'No Attempt',desc:'Off-topic or no response'}
+      ]
+    },
+    coherenceCohesion: {
+      name:'Coherence & Cohesion',
+      desc:'Is the writing logically organised? Are linking words used appropriately?',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Clear progression; skilled use of cohesive devices throughout'},
+        {score:4,label:'Good',desc:'Good organisation; some errors in cohesion but meaning clear'},
+        {score:3,label:'Adequate',desc:'Basic organisation; overuse or underuse of linking words'},
+        {score:2,label:'Limited',desc:'Lacks organisation; cohesive devices rare or faulty'},
+        {score:1,label:'Very Limited',desc:'No clear structure; ideas unclear'},
+        {score:0,label:'No Attempt',desc:'No coherent text'}
+      ]
+    },
+    lexicalResource: {
+      name:'Lexical Resource',
+      desc:'Range and accuracy of vocabulary used.',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Wide range; precise, natural word choice; few errors'},
+        {score:4,label:'Good',desc:'Adequate range; some awkward phrasing but meaning clear'},
+        {score:3,label:'Adequate',desc:'Limited but adequate; errors noticeable but not blocking'},
+        {score:2,label:'Limited',desc:'Very basic vocabulary; frequent errors affect meaning'},
+        {score:1,label:'Very Limited',desc:'Extremely limited; meaning often unclear'},
+        {score:0,label:'No Attempt',desc:'No vocabulary use'}
+      ]
+    },
+    grammaticalRange: {
+      name:'Grammatical Range & Accuracy',
+      desc:'Variety and accuracy of grammatical structures.',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Wide range of structures; rare errors; complex sentences used well'},
+        {score:4,label:'Good',desc:'Mix of simple/complex; some errors but not impeding'},
+        {score:3,label:'Adequate',desc:'Mainly simple structures; errors frequent in complex forms'},
+        {score:2,label:'Limited',desc:'Very limited structures; errors frequent and impeding'},
+        {score:1,label:'Very Limited',desc:'Almost no control; errors throughout'},
+        {score:0,label:'No Attempt',desc:'No grammatical structure'}
+      ]
+    }
+  },
+  speaking: {
+    fluencyCoherence: {
+      name:'Fluency & Coherence',
+      desc:'Speaks at length with minimal hesitation; ideas connected logically.',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Speaks fluently; natural pace; ideas well-connected'},
+        {score:4,label:'Good',desc:'Mostly fluent; occasional hesitation; generally coherent'},
+        {score:3,label:'Adequate',desc:'Some fluency; frequent pauses; basic coherence maintained'},
+        {score:2,label:'Limited',desc:'Halting speech; long pauses; meaning often unclear'},
+        {score:1,label:'Very Limited',desc:'Very hesitant; isolated words; almost no coherence'},
+        {score:0,label:'No Attempt',desc:'No speech recorded'}
+      ]
+    },
+    lexicalResource: {
+      name:'Lexical Resource',
+      desc:'Range and accuracy of vocabulary in speech.',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Wide vocabulary; paraphrases naturally; rare errors'},
+        {score:4,label:'Good',desc:'Adequate range; some repetition; meaning always clear'},
+        {score:3,label:'Adequate',desc:'Limited vocabulary; repetition noticeable; errors present'},
+        {score:2,label:'Limited',desc:'Very basic vocabulary; frequent inadequacy'},
+        {score:1,label:'Very Limited',desc:'Extremely limited; meaning frequently unclear'},
+        {score:0,label:'No Attempt',desc:'No vocabulary used'}
+      ]
+    },
+    grammaticalRange: {
+      name:'Grammatical Range & Accuracy',
+      desc:'Variety and accuracy of spoken grammar.',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Complex structures used accurately; rare errors'},
+        {score:4,label:'Good',desc:'Mix of structures; errors present but not impeding'},
+        {score:3,label:'Adequate',desc:'Mainly simple structures; errors frequent'},
+        {score:2,label:'Limited',desc:'Very limited; errors impede communication'},
+        {score:1,label:'Very Limited',desc:'Almost no grammatical control'},
+        {score:0,label:'No Attempt',desc:'No speech'}
+      ]
+    },
+    pronunciation: {
+      name:'Pronunciation',
+      desc:'Clarity, word stress, sentence rhythm, intonation.',
+      weight:25,
+      bands:[
+        {score:5,label:'Excellent',desc:'Clear throughout; natural rhythm and stress; easy to understand'},
+        {score:4,label:'Good',desc:'Generally clear; some L1 influence; always intelligible'},
+        {score:3,label:'Adequate',desc:'Mostly intelligible; L1 accent noticeable; some strain'},
+        {score:2,label:'Limited',desc:'Often unclear; L1 features frequently impede understanding'},
+        {score:1,label:'Very Limited',desc:'Difficult to understand throughout'},
+        {score:0,label:'No Attempt',desc:'No speech recorded'}
+      ]
+    }
+  }
+};
+
+let currentRubric = JSON.parse(JSON.stringify(DEFAULT_RUBRIC));
+
+function showRubricEditor() {
+  const modal = document.getElementById('rubricModal');
+  if(!modal) return;
+  renderRubricEditor();
+  modal.classList.add('open');
+}
+
+function renderRubricEditor() {
+  const body = document.getElementById('rubricBody');
+  if(!body) return;
+
+  const mkSection = (sectionKey, label) => {
+    const criteria = currentRubric[sectionKey];
+    return `<div style="margin-bottom:20px">
+      <div style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;color:var(--tx);margin-bottom:10px">${label}</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--g);color:#fff">
+          <th style="padding:8px 10px;text-align:left;font-size:11px">Criterion</th>
+          <th style="padding:8px 10px;text-align:center;font-size:11px;width:80px">Weight %</th>
+          <th style="padding:8px 10px;text-align:left;font-size:11px">Description</th>
+        </tr></thead>
+        <tbody>
+          ${Object.entries(criteria).map(([cKey,c],i)=>`
+            <tr style="background:${i%2===0?'#fff':'var(--bg)'}">
+              <td style="padding:9px 10px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--bdl)">${esc(c.name)}</td>
+              <td style="padding:9px 10px;text-align:center;border-bottom:1px solid var(--bdl)">
+                <input type="number" min="0" max="100" value="${c.weight||25}"
+                  style="width:60px;text-align:center;border:1.5px solid var(--bd);border-radius:6px;padding:4px;font-size:13px;font-weight:700;color:var(--g)"
+                  id="rubric_${sectionKey}_${cKey}_weight"
+                  onchange="updateRubricWeight('${sectionKey}','${cKey}',this.value)">
+              </td>
+              <td style="padding:9px 10px;font-size:12px;color:var(--txl);border-bottom:1px solid var(--bdl)">${esc(c.desc)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="padding:0 10px 10px;background:${i%2===0?'#fff':'var(--bg)'}">
+                <table style="width:100%;border-collapse:collapse">
+                  <thead><tr style="background:var(--bg)">
+                    <th style="padding:5px 8px;font-size:10px;text-transform:uppercase;color:var(--txl)">Score</th>
+                    <th style="padding:5px 8px;font-size:10px;text-transform:uppercase;color:var(--txl)">Band</th>
+                    <th style="padding:5px 8px;font-size:10px;text-transform:uppercase;color:var(--txl)">Descriptor</th>
+                  </tr></thead>
+                  <tbody>
+                    ${c.bands.map(b=>`<tr>
+                      <td style="padding:4px 8px;font-size:13px;font-weight:700;color:var(--g);text-align:center">${b.score}</td>
+                      <td style="padding:4px 8px;font-size:12px;font-weight:600;white-space:nowrap">${esc(b.label)}</td>
+                      <td style="padding:4px 8px;font-size:12px;color:var(--txl)">${esc(b.desc)}</td>
+                    </tr>`).join('')}
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  };
+
+  // Check weight totals
+  const wrTotal = Object.values(currentRubric.writing).reduce((s,c)=>s+(c.weight||0),0);
+  const spTotal = Object.values(currentRubric.speaking).reduce((s,c)=>s+(c.weight||0),0);
+
+  body.innerHTML =
+    `<div style="background:var(--gp);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--gm);margin-bottom:16px;border:1px solid rgba(26,61,28,.12)">
+      &#9432; Based on IELTS / Cambridge CEFR descriptors. Weights must sum to 100% per section.
+      Writing: <strong>${wrTotal}%</strong> &nbsp; Speaking: <strong>${spTotal}%</strong>
+      ${wrTotal!==100||spTotal!==100?'<span style="color:var(--red);font-weight:700"> ⚠ Rebalance weights to 100%</span>':'<span style="color:var(--green)"> ✓</span>'}
+    </div>`
+    + mkSection('writing','✍️ Writing Rubric')
+    + mkSection('speaking','🎙 Speaking Rubric');
+}
+
+function updateRubricWeight(section, criterion, val) {
+  if(!currentRubric[section]||!currentRubric[section][criterion]) return;
+  currentRubric[section][criterion].weight = parseInt(val)||0;
+  // Re-render totals note
+  const wrTotal = Object.values(currentRubric.writing).reduce((s,c)=>s+(c.weight||0),0);
+  const spTotal = Object.values(currentRubric.speaking).reduce((s,c)=>s+(c.weight||0),0);
+  const note = document.querySelector('#rubricBody div[style*="gp"]');
+  if(note) note.innerHTML = `&#9432; Based on IELTS / Cambridge CEFR descriptors.
+    Writing: <strong>${wrTotal}%</strong> &nbsp; Speaking: <strong>${spTotal}%</strong>
+    ${wrTotal!==100||spTotal!==100?'<span style="color:var(--red);font-weight:700"> ⚠ Rebalance weights to 100%</span>':'<span style="color:var(--green)"> ✓</span>'}`;
+}
+
+function resetRubric() {
+  currentRubric = JSON.parse(JSON.stringify(DEFAULT_RUBRIC));
+  renderRubricEditor();
+  toast('Rubric reset to defaults', 'info');
+}
+
+
+function exportStudentsCSV() {
+  const rows = [['Name','Email','DOB','Nationality','Status','Level','Grammar%','Reading%','Listening%','Date']];
+  students.forEach(s => {
+    const r = results[s.id]||{};
+    rows.push([
+      s.name||'', s.email||'', s.dob||'', s.nationality||'',
+      s.status||'', r.level||s.level||'',
+      r.gmScore!=null?r.gmScore:'',
+      r.rdScore!=null?r.rdScore:'',
+      r.lstScore!=null?r.lstScore:'',
+      fmtDate(s.completedAt||s.createdAt)
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => '"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'MEC_Students_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('CSV exported', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// SAMPLE DATA (offline / demo)
+// ══════════════════════════════════════════════════════
+function getSampleStudents() {
+  return [
+    {id:'DEMO-001',name:'Kim Minhee',email:'minhee@example.com',dob:'15/03/2005',nationality:'Korean',status:'completed',level:'B1',gmScore:72,rdScore:68,lstScore:75,completedAt:{seconds:Date.now()/1000-3600}},
+    {id:'DEMO-002',name:'Tanaka Yuki',email:'yuki@example.com',dob:'22/07/2006',nationality:'Japanese',status:'in_progress',createdAt:{seconds:Date.now()/1000-7200}},
+  ];
+}
+
+// ══════════════════════════════════════════════════════
+// EVENT DELEGATION
+// ══════════════════════════════════════════════════════
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-fn]');
+  if (!btn) return;
+  e.stopPropagation();
+  const fn = btn.dataset.fn;
+  const id = btn.dataset.id;
+  switch(fn) {
+    case 'sendInvite':     sendInvite(id);     break;
+    case 'copyLink':       copyLink(id);       break;
+    case 'editStudent':    editStudent(id);    break;
+    case 'deleteStudent':  deleteStudent(id);  break;
+    case 'viewResult':     viewResult(id);     break;
+    case 'downloadReport': downloadReport(id); break;
+    case 'regenReport':    regenerateStudentReport(id); break;
+    case 'loadAudio':      loadAndShowAudio(id); break;
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.nav-item[data-page]').forEach(el =>
+    el.addEventListener('click', () => navTo(el.dataset.page))
+  );
+});
+
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-fn]');
+  if (!btn) return;
+  e.stopPropagation();
+  const fn = btn.dataset.fn;
+  const id = btn.dataset.id;
+  switch(fn) {
+    case 'sendInvite':     sendInvite(id);     break;
+    case 'copyLink':       copyLink(id);       break;
+    case 'editStudent':    editStudent(id);    break;
+    case 'deleteStudent':  deleteStudent(id);  break;
+    case 'viewResult':     viewResult(id);     break;
+    case 'downloadReport': downloadReport(id); break;
+    case 'regenReport':    regenerateStudentReport(id); break;
+    case 'loadAudio':      loadAndShowAudio(id); break;
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.nav-item[data-page]').forEach(el =>
+    el.addEventListener('click', () => navTo(el.dataset.page))
+  );
+});
+
+async function regenerateStudentReport(studentId) {
+  const s = students.find(x => x.id === studentId);
+  if (!s) { toast('Student not found', 'error'); return; }
+  const key = getStoredApiKey();
+  if (!key) { toast('Set Anthropic API key in Settings first', 'error'); return; }
+
+  let r = results[studentId];
+  if (!r) {
+    showLoading(true, 'Loading data...');
+    r = await loadResult(studentId);
+    showLoading(false);
+  }
+  if (!r) { toast('No result data found', 'error'); return; }
+
+  showLoading(true, 'Generating AI report for ' + s.name + '...');
+  try {
+    // Build prompt from stored data
+    const lv  = r.level || 'B1';
+    const gSc = r.gmScore  ?? 0;
+    const rdSc= r.rdScore  ?? 0;
+    const lSc = r.lstScore ?? 0;
+    const gmPath = (r.gmHistory||[]).map(h=>h.lv).filter((v,i,a)=>i===0||v!==a[i-1]).join('→') || lv;
+    const rdPath = (r.rdLevelHistory||[]).join('→') || lv;
+    const lsPath = (r.lstLevelHistory||[]).join('→') || lv;
+    const wrText = (r.writingResponses||[]).map((w,i)=>
+      'Task '+(i+1)+' ('+( w.task||w.taskType||'Writing')+') ['+( w.wordCount||0)+' words]: '+( w.text||'(no response)')
+    ).join('\n\n');
+    const LEVELS=['Pre-A1','A1','A2','B1','B2','C1'];
+    const LI = lv => LEVELS.indexOf(lv);
+    const score_gate = (lv, pct) => {
+      const li = LI(lv);
+      if(pct >= 50) return lv;
+      if(pct >= 30) return LEVELS[Math.max(0,li-1)];
+      return LEVELS[Math.max(0,li-2)];
+    };
+    const rdCEFR = score_gate(lv, rdSc);
+    const lsCEFR = score_gate(lv, lSc);
+
+    const prompt = 'CANDIDATE: '+s.name+' | DOB: '+(s.dob||'n/a')+' | Nat: '+(s.nationality||'n/a')
+      +'\nSCORES: Grammar '+gSc+'% | Reading '+rdSc+'% | Listening '+lSc+'%'
+      +'\nADAPTIVE PATH: Grammar='+gmPath+' | Reading='+rdPath+' | Listening='+lsPath
+      +'\nFINAL LEVEL: '+lv
+      +'\nSECTION CEFR (score-gated): Grammar='+lv+' ('+gSc+'%) | Reading='+rdCEFR+' ('+rdSc+'%) | Listening='+lsCEFR+' ('+lSc+'%)'
+      +'\nNOTE: Score-gate applied: <30%=drop 2 levels, 30-49%=drop 1 level, >=50%=confirm'
+      +'\nWRITING:\n'+wrText
+      +'\n\nProvide detailed diagnostic. Return ONLY valid JSON.';
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 3000,
+        system: ADMIN_REPORT_SYS,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await resp.json();
+    if (d.error) throw new Error(d.error.message);
+    const t = (d.content?.[0]?.text) || '{}';
+    const ar = JSON.parse(t.replace(/```json\n?|```\n?/g, '').trim());
+
+    // Save to Firebase
+    if (db) {
+      const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+      await updateDoc(doc(db, 'results', studentId), {
+        adminReport: ar,
+        level: ar.finalCEFR || lv,
+        skillLevels: ar.skillLevels || {},
+        updatedAt: { seconds: Date.now() / 1000 }
+      });
+    }
+    results[studentId] = { ...r, adminReport: ar, level: ar.finalCEFR || lv };
+    showLoading(false);
+    toast('AI report generated for ' + s.name + ' ✓', 'success');
+    renderPage();
+  } catch(e) {
+    showLoading(false);
+    toast('AI generation failed: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+</script>
+
+<!-- RUBRIC MODAL -->
+<div class="modal-bg" id="rubricModal">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-title">
+      <span class="modal-title-txt">&#9997; Writing & Speaking Rubric Settings</span>
+      <button class="modal-close" onclick="closeModal('rubricModal')">&#10005;</button>
+    </div>
+    <div class="modal-body" id="rubricBody" style="max-height:70vh;overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="resetRubric()">&#8635; Reset to Defaults</button>
+      <button class="btn btn-s" onclick="closeModal('rubricModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
