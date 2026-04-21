@@ -2819,7 +2819,7 @@ document.addEventListener('click',function(e){
   const a=el.dataset.action, v=el.dataset.v, v2=el.dataset.v2, v3=el.dataset.v3, v4=el.dataset.v4;
   switch(a){
     case 'startTest':       startTest(); break;
-    case 'setAudience':     S.audience=v; render(); break;
+    case 'setAudience':     S.audience=v; document.querySelectorAll('.aud-btn').forEach(b=>b.classList.toggle('aud-sel',b===el)); break;
     case 'sysPlayAudio':    sysPlayAudio(); break;
     case 'sysAudioOK':      S.sysAudio=true; render(); break;
     case 'sysAudioFail':    S.sysAudio=false; render(); break;
