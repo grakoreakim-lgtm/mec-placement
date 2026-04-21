@@ -907,7 +907,8 @@ function nextLstQ(ti,qi,total,totalT){
 // TTS
 function playLST(){
   const task=S.lstTasks[S.lstIdx]; if(!task) return;
-  if(!window.speechSynthesis&&!task.turns[0]?.audioB64){
+  const _hasAudioFile=task.turns.some(t=>t.audioB64||t.audioUrl);
+  if(!window.speechSynthesis&&!_hasAudioFile){
     toast('Audio not available in this browser.'); return;
   }
 
