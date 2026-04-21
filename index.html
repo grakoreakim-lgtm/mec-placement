@@ -1202,16 +1202,6 @@ function showFinalComments(ar) {
   const n=$('aiStatusNote');
   if(n) n.innerHTML='<span class="ai-done">&#10003; Analysis complete. Your report is ready for collection at MEC Academy on your first day.</span>';
 
-  // Show final comments if available
-  const box=$('finalCommentsBox');
-  const txt=$('finalCommentsText');
-  if(box && txt && ar && ar.finalComments) {
-    // Format into paragraphs
-    const lines = ar.finalComments.split(/\n+/).filter(l=>l.trim());
-    txt.innerHTML = lines.map(l=>`<p style="margin-bottom:10px">${H(l)}</p>`).join('');
-    box.style.display='block';
-  }
-
   // Show section score rationale if available
   if(ar && ar.sectionScoreRationale) {
     const sr = ar.sectionScoreRationale;
@@ -1958,10 +1948,6 @@ function rResults(){
       +'<div class="ns-item"><div class="ns-num">3</div><div class="ns-text"><strong>Class Placement</strong><br>You will be placed in the most suitable class.</div></div>'
       +'<div class="ns-item"><div class="ns-num">4</div><div class="ns-text"><strong>Collect Your Report</strong><br>A printed report will be provided on your first day.</div></div>'
     +'</div>'
-    +'</div>'
-    +'<div id="finalCommentsBox" style="display:none;background:var(--ivory-d);border:1px solid var(--bdl);border-radius:14px;padding:18px 20px;margin-top:16px">'
-      +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txl);margin-bottom:12px">&#128203; Your Personal Assessment Summary</div>'
-      +'<div id="finalCommentsText" style="font-size:14.5px;line-height:1.9;color:var(--txm)"></div>'
     +'</div>';
 }
 
