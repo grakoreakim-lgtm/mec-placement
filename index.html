@@ -1272,7 +1272,7 @@ function rSystemCheck(){
   $('app').innerHTML=
     '<div class="sc-wrap">'    +'<div class="sc-hd">'      +'<div class="sc-icon">&#127908;</div>'      +'<div class="sc-title">System Check</div>'      +'<div class="sc-sub">Please test your audio and microphone before starting.</div>'    +'</div>'
     // ── Audio Test ──
-    +'<div class="sc-card '+(audioSt==='pass'?'sc-card-ok':audioSt==='fail'?'sc-card-err':'')+'">'      +'<div class="sc-card-hd"><span class="sc-card-icon">&#128264;</span>Audio Playback '+stIcon(audioSt)+'</div>'      +'<div class="sc-card-desc">Click Play to hear a test sentence. Make sure your volume is turned up.</div>'      +(audioSt==='idle'?'<button class="btn btn-sec sc-btn" '+A('sysPlayAudio')+'>&#9658; Play Test Audio</button>':
+    +'<div class="sc-card '+(audioSt==='pass'?'sc-card-ok':audioSt==='fail'?'sc-card-err':'')+'">'      +'<div class="sc-card-hd"><span class="sc-card-icon">&#128264;</span>Audio Playback '+stIcon(audioSt)+'</div>'      +'<div class="sc-card-desc">Click Play to hear a test tone. Make sure your volume is turned up.</div>'      +(audioSt==='idle'?'<button class="btn btn-sec sc-btn" '+A('sysPlayAudio')+'>&#9658; Play Test Audio</button>':
          audioSt==='playing'?'<div class="sc-playing-msg"><span class="sc-spinner">&#9654;</span> Playing audio...</div>':
          audioSt==='pass'?'<div class="sc-ok-msg">&#10003; Audio is working correctly.</div>':'')
       +(audioSt==='pending'?
@@ -1291,40 +1291,35 @@ function rSystemCheck(){
 }
 
 function sysPlayAudio(){
-  if(!('speechSynthesis' in window)){
-    S.sysAudio='pending-confirm'; render(); return;
-  }
-  const text='This is an audio test. If you can hear this sentence clearly, your audio is working correctly. Please click the button below to confirm.';
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC){ S.sysAudio='pending-confirm'; render(); return; }
   const toPending=()=>{ if(S.sysAudio==='playing'){ S.sysAudio='pending-confirm'; render(); } };
-  const speakNow=()=>{
-    const utt=new SpeechSynthesisUtterance(text);
-    utt.lang='en-GB'; utt.rate=0.88; utt.volume=1; utt.pitch=1;
-    const voices=window.speechSynthesis.getVoices()||[];
-    const pick=voices.find(v=>/^en-GB/i.test(v.lang))
-             ||voices.find(v=>/^en[-_]/i.test(v.lang))
-             ||voices.find(v=>/^en/i.test(v.lang));
-    if(pick) utt.voice=pick;
-    let started=false;
-    utt.onstart=()=>{ started=true; };
-    utt.onend=()=>{ toPending(); };
-    utt.onerror=(e)=>{ console.warn('TTS error',e); toPending(); };
-    try{ window.speechSynthesis.speak(utt); }catch(e){ console.warn('speak threw',e); toPending(); return; }
-    // If onstart never fires within 1.8s → silent fail, show confirm immediately
-    setTimeout(()=>{ if(!started) toPending(); },1800);
-    // Safety: move to pending after 8s regardless
-    setTimeout(toPending,8000);
-  };
+  let ctx;
+  try{
+    ctx=new AC();
+    if(ctx.state==='suspended') ctx.resume();
+  }catch(e){ console.warn('AudioContext init failed',e); toPending(); return; }
+  const t0=ctx.currentTime+0.05;
+  const notes=[523.25,659.25,783.99];
+  const noteDur=0.45, gap=0.1, peak=0.22;
+  notes.forEach((freq,i)=>{
+    const osc=ctx.createOscillator();
+    const g=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.value=freq;
+    const start=t0+i*(noteDur+gap-0.25);
+    const end=start+noteDur;
+    g.gain.setValueAtTime(0,start);
+    g.gain.linearRampToValueAtTime(peak,start+0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001,end);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(start);
+    osc.stop(end+0.02);
+  });
+  const totalMs=(t0-ctx.currentTime+notes.length*(noteDur+gap-0.25)+noteDur)*1000+200;
   S.sysAudio='playing';
-  const voices=window.speechSynthesis.getVoices()||[];
-  if(voices.length===0){
-    let fired=false;
-    const onVC=()=>{ if(fired) return; fired=true; window.speechSynthesis.onvoiceschanged=null; speakNow(); };
-    window.speechSynthesis.onvoiceschanged=onVC;
-    setTimeout(()=>{ if(fired) return; fired=true; window.speechSynthesis.onvoiceschanged=null; speakNow(); },600);
-  } else {
-    speakNow();
-  }
   render();
+  setTimeout(()=>{ toPending(); try{ctx.close();}catch(_){} }, Math.max(1200,totalMs));
 }
 
 // Redefine sysAudio states as strings for clarity
