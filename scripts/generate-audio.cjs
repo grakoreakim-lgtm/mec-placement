@@ -56,7 +56,11 @@ async function synthesize(text,voice){
   };
   const res=await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`,{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{
+      'Content-Type':'application/json',
+      // Match the key's allowed HTTP referrer (deployed GitHub Pages origin)
+      'Referer':process.env.GCP_TTS_REFERER||'https://grakoreakim-lgtm.github.io/mec-placement/'
+    },
     body:JSON.stringify(body)
   });
   if(!res.ok){
