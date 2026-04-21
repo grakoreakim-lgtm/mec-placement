@@ -1,0 +1,23 @@
+/* ── Error Identification (inline sentence) ─────────────── */
+.err-sentence-wrap{margin:12px 0 16px}
+.err-sentence{font-size:16px;line-height:2.2;color:var(--tx);font-weight:500}
+.err-inline{
+  display:inline;
+  border-bottom:2.5px solid var(--g);
+  padding:2px 6px 1px;
+  margin:0 3px;
+  border-radius:4px 4px 0 0;
+  cursor:pointer;
+  transition:background .15s,color .15s;
+  position:relative;
+  white-space:nowrap;
+}
+.err-inline:hover{background:var(--gp)}
+.err-inline.err-sel{background:var(--g);color:#fff;border-bottom-color:var(--cu)}
+.err-lbl{
+  font-size:9px;font-weight:800;
+  color:var(--cu);margin-right:2px;
+  vertical-align:super;line-height:0;
+}
+.err-inline.err-sel .err-lbl{color:var(--cul)}
+.err-hint{font-size:12px;color:var(--txl);margin-top:10px;font-style:italic}
