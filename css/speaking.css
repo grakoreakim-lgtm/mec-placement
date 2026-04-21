@@ -4,7 +4,7 @@
 .spk-inst-title{font-size:14px;font-weight:700;color:var(--g);margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .spk-inst-steps{display:flex;flex-direction:column;gap:8px}
 .spk-inst-step{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--txm);line-height:1.6}
-.spk-inst-step>span{flex:1;min-width:0;line-height:1.55}
+.spk-inst-step>span:not(.spk-inst-num){flex:1;min-width:0;line-height:1.55}
 .spk-inst-num{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--g);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .spk-task-section{padding:16px 20px}
 .spk-task-eye{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--cu);margin-bottom:8px}
