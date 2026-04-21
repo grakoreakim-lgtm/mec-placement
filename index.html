@@ -49,9 +49,8 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .sb-foot-txt{font-size:11px;color:rgba(255,255,255,.35);line-height:1.4}
 #main{flex:1;min-width:0;padding:32px 40px 80px}
 #app{max-width:760px;margin:0 auto}
-#app:has(.reg-wrap){max-width:none}
-.reg-wrap{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 52px);margin:-32px -40px -80px}
-.reg-left{background:var(--g);padding:56px 48px;display:flex;flex-direction:column;justify-content:center}
+.reg-wrap{display:block;min-height:calc(100vh - 52px);margin:0}
+.reg-left{display:none}
 .reg-brand{display:flex;align-items:center;gap:8px;margin-bottom:40px}
 .reg-brand-dot{width:8px;height:8px;background:var(--cul);border-radius:50%}
 .reg-brand-name{font-family:'DM Serif Display',serif;font-size:16px;color:#fff;letter-spacing:.02em}
@@ -620,7 +619,7 @@ audio{width:100%;border-radius:8px;margin-top:10px}
 
 
 /* ── System Check ─────────────────────────────────────────── */
-.sc-wrap{max-width:480px;margin:0 auto;padding:20px 16px}
+.sc-wrap{margin:0 auto;padding:20px 16px}
 .sc-hd{text-align:center;margin-bottom:20px}
 .sc-icon{font-size:36px;margin-bottom:8px}
 .sc-title{font-size:22px;font-weight:800;color:var(--tx);margin-bottom:6px}
@@ -2118,16 +2117,36 @@ function sysPlayAudio(){
   if(!('speechSynthesis' in window)){
     S.sysAudio='pending-confirm'; render(); return;
   }
-  window.speechSynthesis.cancel();
-  const utt=new SpeechSynthesisUtterance('This is an audio test. If you can hear this sentence clearly, your audio is working correctly. Please click the button below to confirm.');
-  utt.lang='en-GB'; utt.rate=0.88;
-  utt.onstart=()=>{ const b=$('scAudioBtn'); if(b) b.disabled=true; };
-  utt.onend=()=>{ S.sysAudio='pending-confirm'; render(); };
-  utt.onerror=()=>{ S.sysAudio=false; render(); };
-  window.speechSynthesis.speak(utt);
-  // fallback: if no onend fires within 6s, still show confirm
+  const text='This is an audio test. If you can hear this sentence clearly, your audio is working correctly. Please click the button below to confirm.';
+  const toPending=()=>{ if(S.sysAudio==='playing'){ S.sysAudio='pending-confirm'; render(); } };
+  const speakNow=()=>{
+    const utt=new SpeechSynthesisUtterance(text);
+    utt.lang='en-GB'; utt.rate=0.88; utt.volume=1; utt.pitch=1;
+    const voices=window.speechSynthesis.getVoices()||[];
+    const pick=voices.find(v=>/^en-GB/i.test(v.lang))
+             ||voices.find(v=>/^en[-_]/i.test(v.lang))
+             ||voices.find(v=>/^en/i.test(v.lang));
+    if(pick) utt.voice=pick;
+    let started=false;
+    utt.onstart=()=>{ started=true; };
+    utt.onend=()=>{ toPending(); };
+    utt.onerror=(e)=>{ console.warn('TTS error',e); toPending(); };
+    try{ window.speechSynthesis.speak(utt); }catch(e){ console.warn('speak threw',e); toPending(); return; }
+    // If onstart never fires within 1.8s → silent fail, show confirm immediately
+    setTimeout(()=>{ if(!started) toPending(); },1800);
+    // Safety: move to pending after 8s regardless
+    setTimeout(toPending,8000);
+  };
   S.sysAudio='playing';
-  setTimeout(()=>{ if(S.sysAudio==='playing'){S.sysAudio='pending-confirm';render();} },6000);
+  const voices=window.speechSynthesis.getVoices()||[];
+  if(voices.length===0){
+    let fired=false;
+    const onVC=()=>{ if(fired) return; fired=true; window.speechSynthesis.onvoiceschanged=null; speakNow(); };
+    window.speechSynthesis.onvoiceschanged=onVC;
+    setTimeout(()=>{ if(fired) return; fired=true; window.speechSynthesis.onvoiceschanged=null; speakNow(); },600);
+  } else {
+    speakNow();
+  }
   render();
 }
 
@@ -2155,11 +2174,21 @@ async function sysMicRecord(){
       const blob=new Blob(chunks,{type:'audio/webm'});
       S.sysMicBlob=blob;
       const url=URL.createObjectURL(blob);
-      const a=new Audio(url);
-      if(status) status.textContent='Playing back your recording...';
-      a.play().then(()=>{
-        a.onended=()=>{ S.sysMic='pending-confirm'; render(); };
-      }).catch(()=>{ S.sysMic='pending-confirm'; render(); });
+      const a=new Audio();
+      a.src=url; a.volume=1.0; a.preload='auto'; a.style.display='none';
+      document.body.appendChild(a);
+      const st=$('scMicStatus'); if(st) st.textContent='Playing back your recording...';
+      let settled=false;
+      const cleanup=()=>{ try{ a.remove(); URL.revokeObjectURL(url); }catch(_){} };
+      const finish=()=>{ if(settled) return; settled=true; cleanup(); S.sysMic='pending-confirm'; render(); };
+      a.onended=finish;
+      a.onerror=(e)=>{ console.warn('Mic playback error',e); finish(); };
+      const p=a.play();
+      if(p && typeof p.catch==='function'){
+        p.catch(err=>{ console.warn('Mic playback failed',err); finish(); });
+      }
+      // Safety: if neither onended nor error fires within 8s, show confirm anyway
+      setTimeout(finish,8000);
     };
     rec.start();
     let countdown=3;
