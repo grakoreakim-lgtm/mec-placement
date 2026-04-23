@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/qbank_admins/$(request.auth.uid));
+    }
+
+    // QBank item pools — admin CRUD only
+    match /qbank_grammar/{id}   { allow read, write: if isAdmin(); }
+    match /qbank_reading/{id}   { allow read, write: if isAdmin(); }
+    match /qbank_listening/{id} { allow read, write: if isAdmin(); }
+    match /qbank_writing/{id}   { allow read, write: if isAdmin(); }
+    match /qbank_speaking/{id}  { allow read, write: if isAdmin(); }
+
+    // QBank settings & meta
+    match /qbank_settings/{id}  { allow read, write: if isAdmin(); }
+    match /qbank_meta/{id}      { allow read, write: if isAdmin(); }
+
+    // Admin whitelist — bootstrap first entry via Firebase Console
+    match /qbank_admins/{uid} {
+      allow read:  if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Existing student flow — unauthenticated, token-scoped at app layer
+    // TODO: tighten with Cloud Function + custom claims when auth refactor lands
+    match /students/{id} { allow read, write: if true; }
+    match /results/{id}  { allow read, write: if true; }
+  }
+}

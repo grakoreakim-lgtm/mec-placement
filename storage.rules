@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null &&
+        firestore.exists(/databases/(default)/documents/qbank_admins/$(request.auth.uid));
+    }
+
+    // Public published qbank JSON — student app fetches this
+    match /qbank/published.json {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Listening audio (single-segment path: audio/LS-001-t0.mp3)
+    match /audio/{file} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Student recordings (two-segment path: audio/{studentId}/task_N.webm)
+    // Preserve current app behavior until auth refactor
+    match /audio/{studentId}/{filename} {
+      allow read, write: if true;
+    }
+  }
+}
